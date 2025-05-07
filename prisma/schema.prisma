@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String?        @unique
+  phone         String?        @unique
+  name          String?
+  password      String
+  birthDate     DateTime?
+  role          String         @default("USER")
+  createdAt     DateTime       @default(now())
+  orders        Order[]        // Зв'язок із замовленнями
+  addresses     Address[]      // Зв'язок із адресами
+  paymentMethods PaymentMethod[] // Зв'язок із способами оплати
+  notifications NotificationSettings? // Налаштування сповіщень
+  cart          Cart?          @relation // Додаємо зворотний зв’язок із Cart
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  name      String
+  price     Float
+  image     String
+  quantity  Int      @default(1)
+}
+
+model Order {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  status    String
+  total     Float
+  createdAt DateTime  @default(now())
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        Int    @id @default(autoincrement())
+  orderId   Int
+  order     Order  @relation(fields: [orderId], references: [id])
+  name      String
+  quantity  Int
+  price     Float
+}
+
+model Address {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
+  title     String
+  address   String
+  city      String
+  postal    String
+  isDefault Boolean @default(false)
+}
+
+model PaymentMethod {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id])
+  type      String
+  last4     String
+  expiry    String
+  isDefault Boolean @default(false)
+}
+
+model NotificationSettings {
+  id                Int  @id @default(autoincrement())
+  userId            Int  @unique
+  user              User @relation(fields: [userId], references: [id])
+  orderNotifications Boolean @default(true)
+  promoNotifications Boolean @default(true)
+  newsNotifications Boolean @default(false)
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  category      Category @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  price         Float
+  stock         Int
+  sku           String   @unique
+  status        String
+  description   String?
+  ingredients   String?
+  image         String?
+  isOnSale      Boolean  @default(false)
+  discount      Int      @default(0)
+  salePrice     Float?
+  saleStartDate String?
+  saleEndDate   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Slide {
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String
+  image     String
+  link      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

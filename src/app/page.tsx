@@ -1,103 +1,224 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import ProductCard from "@/components/product-card";
+import { CartProvider } from "@/lib/CartContext";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  isOnSale: boolean;
+  createdAt: string;
+}
+
+interface Slide {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  link: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [saleProducts, setSaleProducts] = useState<Product[]>([]);
+  const [newProducts, setNewProducts] = useState<Product[]>([]);
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  // Завантаження даних при першому рендері
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Завантаження акційних товарів
+        const saleResponse = await fetch("/api/products?onlyOnSale=true&limit=4");
+        const saleData = await saleResponse.json();
+        if (!saleResponse.ok) {
+          throw new Error(saleData.error || "Не вдалося завантажити акційні товари");
+        }
+        setSaleProducts(saleData.products);
+
+        // Завантаження новинок
+        const newResponse = await fetch("/api/products?sort=new&limit=4");
+        const newData = await newResponse.json();
+        if (!newResponse.ok) {
+          throw new Error(newData.error || "Не вдалося завантажити новинки");
+        }
+        setNewProducts(newData.products);
+
+        // Завантаження слайдів
+        const slidesResponse = await fetch("/api/slides");
+        const slidesData = await slidesResponse.json();
+        if (!slidesResponse.ok) {
+          throw new Error(slidesData.error || "Не вдалося завантажити слайди");
+        }
+        setSlides(slidesData.slides);
+      } catch (error: any) {
+        setErrorMessage(`Помилка: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Автоматична зміна слайдів
+  useEffect(() => {
+    if (slides.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000); // Зміна слайду кожні 5 секунд
+
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
+  // Обробники навігації слайдера
+  const goToPreviousSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const goToNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  return (
+    <CartProvider>
+      <div>
+        {/* Слайдер */}
+        <section className="relative w-full h-[500px] bg-gray-200">
+          {slides.length > 0 ? (
+            <>
+              {/* Зображення слайдера */}
+              <Image
+                src={slides[currentSlide].image}
+                alt={slides[currentSlide].title}
+                fill
+                className="object-cover"
+                priority
+              />
+
+              {/* Текст слайдера */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/40">
+                <h1 className="text-4xl font-bold mb-2">{slides[currentSlide].title}</h1>
+                <p className="text-lg mb-4">{slides[currentSlide].subtitle}</p>
+                <a
+                  href={slides[currentSlide].link}
+                  className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition"
+                >
+                  Дізнатися більше
+                </a>
+              </div>
+
+              {/* Кнопки навігації слайдера */}
+              <button
+                onClick={goToPreviousSlide}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow-md"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={goToNextSlide}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow-md"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+
+              {/* Індикатори слайдера */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2 h-2 rounded-full ${
+                      currentSlide === index ? "bg-primary" : "bg-white/60"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+              {isLoading ? "Завантаження слайдів..." : "Слайди не знайдено"}
+            </div>
+          )}
+        </section>
+
+        {/* Повідомлення про помилку */}
+        {errorMessage && (
+          <div className="container mx-auto py-4">
+            <div className="bg-red-100 text-red-800 p-4 rounded-lg">
+              {errorMessage}
+            </div>
+          </div>
+        )}
+
+        {/* Секція акційних товарів */}
+        <section className="py-12 px-4 bg-red-50">
+          <div className="container mx-auto">
+            <h2 className="text-2xl font-bold mb-8">Акції</h2>
+
+            {isLoading ? (
+              <div className="text-center">Завантаження...</div>
+            ) : saleProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {saleProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    description={product.description}
+                    image={product.image}
+                    price={product.price}
+                    isOnSale={product.isOnSale}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">Акційних товарів немає</div>
+            )}
+          </div>
+        </section>
+
+        {/* Секція новинок */}
+        <section className="py-12 px-4 bg-red-50">
+          <div className="container mx-auto">
+            <h2 className="text-2xl font-bold mb-8">Новинки</h2>
+
+            {isLoading ? (
+              <div className="text-center">Завантаження...</div>
+            ) : newProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {newProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    description={product.description}
+                    image={product.image}
+                    price={product.price}
+                    isOnSale={product.isOnSale}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">Новинок немає</div>
+            )}
+          </div>
+        </section>
+      </div>
+    </CartProvider>
   );
 }

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: miya_admin
+      POSTGRES_PASSWORD: aF35XgdrJNBn768
+      POSTGRES_DB: babusyn_gostynets
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
