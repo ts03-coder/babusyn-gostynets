@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int                   @id @default(autoincrement())
+  email          String?               @unique
+  phone          String?               @unique
+  name           String?
+  password       String
+  birthDate      DateTime?
+  role           String                @default("USER")
+  createdAt      DateTime              @default(now())
+  orders         Order[]
+  addresses      Address[]
+  paymentMethods PaymentMethod[]
+  notifications  NotificationSettings? @relation("UserNotifications")
+  notificationsId Int?                 @unique
+  cart           Cart?                 @relation("UserCart")
+  cartId         String?               @unique
+}
+
+model Cart {
+  id     String     @id @default(uuid())
+  userId Int        @unique
+  user   User       @relation("UserCart", fields: [userId], references: [id], onDelete: Cascade)
+  items  CartItem[]
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+}
+
+model Order {
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  user           User        @relation(fields: [userId], references: [id])
+  addressId      Int?
+  address        Address?    @relation("OrderToAddress", fields: [addressId], references: [id])
+  paymentId      String?
+  deliveryMethod String?
+  status         String
+  total          Float
+  comment        String?
+  createdAt      DateTime    @default(now())
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String?
+  name      String
+  quantity  Int
+  price     Float
+}
+
+model Address {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  title     String
+  fullName  String
+  phone     String
+  address   String
+  city      String
+  postal    String?
+  isDefault Boolean @default(false)
+  orders    Order[] @relation("OrderToAddress")
+}
+
+model PaymentMethod {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  type      String
+  last4     String
+  expiry    String
+  isDefault Boolean @default(false)
+}
+
+model NotificationSettings {
+  id                 Int     @id @default(autoincrement())
+  userId             Int     @unique
+  user               User    @relation("UserNotifications", fields: [userId], references: [id])
+  orderNotifications Boolean @default(true)
+  promoNotifications Boolean @default(true)
+  newsNotifications  Boolean @default(false)
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  name          String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  price         Float
+  stock         Int
+  sku           String    @unique
+  status        String
+  description   String?
+  ingredients   String?
+  image         String?
+  isOnSale      Boolean   @default(false)
+  discount      Int       @default(0)
+  salePrice     Float?
+  saleStartDate String?
+  saleEndDate   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  cartItems     CartItem[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Slide {
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String
+  image     String
+  link      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

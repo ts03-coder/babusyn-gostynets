@@ -1,0 +1,1 @@
+export type Tab = "personal" | "orders" | "addresses" | "payment" | "notifications";
