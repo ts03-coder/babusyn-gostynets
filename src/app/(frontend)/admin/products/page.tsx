@@ -37,15 +37,15 @@ import { getCookie } from "cookies-next"
 interface Product {
   id: string;
   name: string;
-  category: { id: string; name: string };
+  category: { id: string; name: string } | null; // Разрешаем null
   price: number;
   stock: number;
   sku: string;
   status: string;
   image: string | null;
   isOnSale: boolean;
-  discount: number;
-  salePrice: number;
+  discount: number | null; // Разрешаем null
+  salePrice: number | null; // Разрешаем null
   saleStartDate: string | null;
   saleEndDate: string | null;
   description: string | null;
@@ -229,18 +229,18 @@ export default function ProductsPage() {
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product)
     setEditFormState({
-      name: product.name,
-      categoryId: product.category.id,
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      sku: product.sku,
-      status: product.status,
+      name: product.name || "",
+      categoryId: product.category?.id || "", // Проверяем, что category существует
+      price: product.price?.toString() || "0",
+      stock: product.stock?.toString() || "0",
+      sku: product.sku || "",
+      status: product.status || "В наявності",
       description: product.description || "",
       ingredients: product.ingredients || "",
       imageFile: null,
-      isOnSale: product.isOnSale,
-      discount: product.discount.toString(),
-      salePrice: product.salePrice.toString(),
+      isOnSale: product.isOnSale || false,
+      discount: product.discount != null ? product.discount.toString() : "0", // Проверяем, что discount не null
+      salePrice: product.salePrice != null ? product.salePrice.toString() : "0", // Проверяем, что salePrice не null
       saleStartDate: product.saleStartDate || "",
       saleEndDate: product.saleEndDate || "",
     })
@@ -507,6 +507,8 @@ export default function ProductsPage() {
           <CardContent>
             {isLoadingProducts || isLoadingCategories ? (
               <div className="text-center py-4">Завантаження...</div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">Товарів не знайдено</div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -542,9 +544,9 @@ export default function ProductsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{product.category.name}</TableCell>
+                        <TableCell>{product.category?.name || "-"}</TableCell>
                         <TableCell>
-                          {product.isOnSale ? (
+                          {product.isOnSale && product.salePrice != null ? (
                             <div>
                               <span className="line-through text-gray-500">{product.price} ₴</span>
                               <span className="font-medium ml-2 text-red-600">{product.salePrice} ₴</span>
@@ -554,7 +556,7 @@ export default function ProductsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {product.isOnSale ? (
+                          {product.isOnSale && product.discount != null ? (
                             <div>
                               <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                                 -{product.discount}%
@@ -565,8 +567,8 @@ export default function ProductsPage() {
                             <span className="text-gray-500">-</span>
                           )}
                         </TableCell>
-                        <TableCell>{product.stock}</TableCell>
-                        <TableCell>{product.sku}</TableCell>
+                        <TableCell>{product.stock || 0}</TableCell>
+                        <TableCell>{product.sku || "-"}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
@@ -574,7 +576,7 @@ export default function ProductsPage() {
                               product.status === "В наявності" ? "bg-green-50 text-green-700 border-green-200" : product.status === "Закінчується" ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-red-50 text-red-700 border-red-200"
                             }
                           >
-                            {product.status}
+                            {product.status || "Невідомо"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -667,9 +669,11 @@ export default function ProductsPage() {
                   <h3 className="text-xl font-semibold">{selectedProduct.name}</h3>
                   <p className="text-gray-500">{selectedProduct.id}</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                      {selectedProduct.category.name}
-                    </Badge>
+                    {selectedProduct.category && (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                        {selectedProduct.category.name}
+                      </Badge>
+                    )}
                     <Badge
                       variant="outline"
                       className={
@@ -682,7 +686,7 @@ export default function ProductsPage() {
                     >
                       {selectedProduct.status}
                     </Badge>
-                    {selectedProduct.isOnSale && (
+                    {selectedProduct.isOnSale && selectedProduct.discount != null && (
                       <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                         Акція -{selectedProduct.discount}%
                       </Badge>
@@ -697,7 +701,7 @@ export default function ProductsPage() {
                   <div className="space-y-2">
                     <p className="text-sm">
                       <span className="font-medium">Ціна:</span>{" "}
-                      {selectedProduct.isOnSale ? (
+                      {selectedProduct.isOnSale && selectedProduct.salePrice != null ? (
                         <>
                           <span className="line-through text-gray-500">{selectedProduct.price} ₴</span>
                           <span className="font-medium ml-2 text-red-600">{selectedProduct.salePrice} ₴</span>
@@ -707,14 +711,14 @@ export default function ProductsPage() {
                       )}
                     </p>
                     <p className="text-sm">
-                      <span className="font-medium">Залишок:</span> {selectedProduct.stock} шт.
+                      <span className="font-medium">Залишок:</span> {selectedProduct.stock || 0} шт.
                     </p>
                     <p className="text-sm">
-                      <span className="font-medium">SKU:</span> {selectedProduct.sku}
+                      <span className="font-medium">SKU:</span> {selectedProduct.sku || "-"}
                     </p>
                   </div>
                 </div>
-                {selectedProduct.isOnSale && (
+                {selectedProduct.isOnSale && selectedProduct.discount != null && selectedProduct.salePrice != null && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Інформація про акцію</h4>
                     <div className="space-y-2">
@@ -997,7 +1001,7 @@ export default function ProductsPage() {
               </div>
               <div>
                 <div className="font-medium">{selectedProduct.name}</div>
-                <div className="text-sm text-gray-500">{selectedProduct.sku}</div>
+                <div className="text-sm text-gray-500">{selectedProduct.sku || "-"}</div>
               </div>
             </div>
           )}

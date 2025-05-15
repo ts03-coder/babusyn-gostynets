@@ -28,6 +28,8 @@ import {
   Pencil,
   Search,
   Trash2,
+  X,
+  Loader2,
 } from "lucide-react"
 import { getCookie } from "cookies-next"
 
@@ -68,8 +70,9 @@ export default function CustomersPage() {
     email: "",
     phone: "",
   })
+  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; phone?: string }>({})
 
-  // Функція для показу повідомлення (зникає через 5 секунд)
+  // Функция для показа сообщения (исчезает через 5 секунд)
   const showMessage = (type: "success" | "error", message: string) => {
     if (type === "success") {
       setSuccessMessage(message)
@@ -84,7 +87,31 @@ export default function CustomersPage() {
     }, 5000)
   }
 
-  // Завантаження користувачів при першому рендері
+  // Валидация формы
+  const validateForm = () => {
+    const errors: { name?: string; email?: string; phone?: string } = {}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Простая проверка email
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/ // Простая проверка телефона (международный формат)
+
+    if (!editFormState.name) {
+      errors.name = "Ім'я є обов'язковим"
+    }
+    if (!editFormState.email) {
+      errors.email = "Email є обов'язковим"
+    } else if (!emailRegex.test(editFormState.email)) {
+      errors.email = "Невірний формат email"
+    }
+    if (!editFormState.phone) {
+      errors.phone = "Телефон є обов'язковим"
+    } else if (!phoneRegex.test(editFormState.phone)) {
+      errors.phone = "Невірний формат телефону"
+    }
+
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  // Загрузка пользователей при первом рендере
   useEffect(() => {
     const token = getCookie("token")
     if (!token) {
@@ -105,7 +132,7 @@ export default function CustomersPage() {
         if (!response.ok) {
           throw new Error(data.error || "Не вдалося завантажити користувачів")
         }
-        // Фільтруємо користувачів із роллю USER
+        // Фильтруем пользователей с ролью USER
         const customers = data.users.filter((user: User) => user.role === "USER")
         setUsers(customers)
       } catch (error: any) {
@@ -118,7 +145,7 @@ export default function CustomersPage() {
     fetchUsers()
   }, [])
 
-  // Фільтрація користувачів за пошуковим запитом
+  // Фильтрация пользователей по поисковому запросу
   const filteredUsers = users.filter(
     (user) =>
       (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -126,7 +153,7 @@ export default function CustomersPage() {
       (user.phone && user.phone.includes(searchQuery)),
   )
 
-  // Обробники подій для діалогових вікон
+  // Обработчики событий для диалоговых окон
   const handleViewUser = (user: User) => {
     setSelectedUser(user)
     setIsViewDialogOpen(true)
@@ -139,6 +166,7 @@ export default function CustomersPage() {
       email: user.email || "",
       phone: user.phone || "",
     })
+    setFormErrors({}) // Очищаем ошибки при открытии формы
     setIsEditDialogOpen(true)
   }
 
@@ -147,9 +175,14 @@ export default function CustomersPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  // Обробник для редагування користувача
+  // Обработчик для редактирования пользователя
   const editUser = async () => {
     if (!selectedUser) return
+
+    // Проверяем валидацию формы
+    if (!validateForm()) {
+      return
+    }
 
     try {
       const token = getCookie("token")
@@ -159,10 +192,6 @@ export default function CustomersPage() {
 
       const { name, email, phone } = editFormState
 
-      if (!name || !email || !phone) {
-        throw new Error("Обов'язкові поля (ім'я, email, телефон) є обов'язковими")
-      }
-
       const response = await fetch(`/api/users/${selectedUser.id}`, {
         method: "PUT",
         headers: {
@@ -170,6 +199,7 @@ export default function CustomersPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          id: selectedUser.id,
           name,
           email,
           phone,
@@ -193,7 +223,7 @@ export default function CustomersPage() {
     }
   }
 
-  // Обробник для видалення користувача
+  // Обработчик для удаления пользователя
   const deleteUser = async () => {
     if (!selectedUser) return
 
@@ -223,7 +253,7 @@ export default function CustomersPage() {
     }
   }
 
-  // Обчислення статистики користувача
+  // Обчисление статистики пользователя
   const getUserStats = (user: User) => {
     const ordersCount = user.orders.length
     const totalSpent = user.orders.reduce((sum, order) => sum + order.total, 0)
@@ -236,7 +266,7 @@ export default function CustomersPage() {
   return (
     <div className="flex-1 lg:ml-0 pt-16 lg:pt-0">
       <div className="p-6">
-        {/* Сповіщення */}
+        {/* Уведомления */}
         {(successMessage || errorMessage) && (
           <div className="mb-6">
             {successMessage && (
@@ -252,7 +282,7 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* Заголовок сторінки */}
+        {/* Заголовок страницы */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">Клієнти</h1>
@@ -264,22 +294,36 @@ export default function CustomersPage() {
               <Input
                 type="text"
                 placeholder="Пошук клієнтів..."
-                className="pl-9 pr-4 w-full sm:w-auto"
+                className="pl-9 pr-9 w-full sm:w-auto"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Таблиця клієнтів */}
+        {/* Таблица клиентов */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle>Всі клієнти</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-4">Завантаження...</div>
+              <div className="flex justify-center items-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                Клієнтів не знайдено
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -345,7 +389,7 @@ export default function CustomersPage() {
         </Card>
       </div>
 
-      {/* Діалогове вікно перегляду клієнта */}
+      {/* Диалоговое окно просмотра клиента */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -462,7 +506,7 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Діалогове вікно редагування клієнта */}
+      {/* Диалоговое окно редактирования клиента */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -479,7 +523,9 @@ export default function CustomersPage() {
                   id="name"
                   value={editFormState.name}
                   onChange={(e) => setEditFormState({ ...editFormState, name: e.target.value })}
+                  className={formErrors.name ? "border-red-500" : ""}
                 />
+                {formErrors.name && <p className="text-sm text-red-500">{formErrors.name}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
@@ -490,7 +536,9 @@ export default function CustomersPage() {
                   type="email"
                   value={editFormState.email}
                   onChange={(e) => setEditFormState({ ...editFormState, email: e.target.value })}
+                  className={formErrors.email ? "border-red-500" : ""}
                 />
+                {formErrors.email && <p className="text-sm text-red-500">{formErrors.email}</p>}
               </div>
               <div className="space-y-2">
                 <label htmlFor="phone" className="text-sm font-medium">
@@ -500,7 +548,9 @@ export default function CustomersPage() {
                   id="phone"
                   value={editFormState.phone}
                   onChange={(e) => setEditFormState({ ...editFormState, phone: e.target.value })}
+                  className={formErrors.phone ? "border-red-500" : ""}
                 />
+                {formErrors.phone && <p className="text-sm text-red-500">{formErrors.phone}</p>}
               </div>
             </div>
           )}
@@ -513,7 +563,7 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Діалогове вікно видалення клієнта */}
+      {/* Диалоговое окно удаления клиента */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

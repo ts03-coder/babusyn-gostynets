@@ -91,13 +91,19 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           name: true,
-          description: true,
-          image: true,
-          price: true,
           categoryId: true,
+          price: true,
+          stock: true,
+          sku: true,
+          status: true,
+          description: true,
+          ingredients: true,
+          image: true,
           isOnSale: true,
           discount: true,
-          createdAt: true,
+          salePrice: true,
+          saleStartDate: true,
+          saleEndDate: true,
           category: isAdmin ? true : undefined,
         },
       }),
@@ -105,7 +111,6 @@ export async function GET(request: NextRequest) {
     ]);
 
     console.log("Products:", products); // Додано для налагодження
-    console.log("Total products:", total); // Додано для налагодження
     return NextResponse.json({ products, total }, { status: 200 });
   } catch (error: any) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
