@@ -1,6 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
+
+// Інтерфейс для payload JWT
+interface JWTPayload {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+// Інтерфейс для помилок
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
 
 const verifyToken = (authHeader: string | null) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -68,12 +83,13 @@ export async function GET_ID(request: Request, { params }: { params: { id: strin
     }
 
     return NextResponse.json({ order });
-  } catch (error: any) {
-    console.error("Помилка отримання замовлення:", error);
-    if (error.message === "Не авторизовано" || error.message === "Недійсний токен") {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error("Помилка при отриманні замовлення:", apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+      return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
@@ -143,12 +159,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     });
 
     return NextResponse.json({ order: updatedOrder });
-  } catch (error: any) {
-    console.error("Помилка оновлення замовлення:", error);
-    if (error.message === "Не авторизовано" || error.message === "Недійсний токен") {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error("Помилка при оновленні замовлення:", apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+      return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
@@ -188,12 +205,13 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     });
 
     return NextResponse.json({ message: "Замовлення успішно видалено" });
-  } catch (error: any) {
-    console.error("Помилка видалення замовлення:", error);
-    if (error.message === "Не авторизовано" || error.message === "Недійсний токен") {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error("Помилка при видаленні замовлення:", apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+      return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

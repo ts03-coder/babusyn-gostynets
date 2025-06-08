@@ -12,14 +12,11 @@ import {
   Home,
   Menu,
   Package,
-  Percent,
   ShoppingBag,
   Tag,
   Users,
   X,
-  BarChart3,
   Settings,
-  LogOut
 } from "lucide-react"
 
 export default function AdminAside() {

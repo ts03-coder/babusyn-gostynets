@@ -122,9 +122,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       // Показуємо сповіщення про успішне додавання
       toast.success(`${product.name} додано до корзини!`);
-    } catch (error: any) {
-      console.error("Помилка додавання в корзину:", error.message);
-      toast.error(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Помилка додавання в корзину:", error.message);
+        toast.error(`Помилка: ${error.message}`);
+      }
     }
   };
 
@@ -145,9 +147,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       setCart((prevCart) => prevCart.filter((item) => item.productId !== productId));
-    } catch (error: any) {
-      console.error("Помилка видалення з корзини:", error.message);
-      toast.error(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Помилка видалення з корзини:", error.message);
+        toast.error(`Помилка: ${error.message}`);
+      }
     }
   };
 
@@ -176,9 +180,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           prevCart.map((item) => (item.productId === productId ? { ...item, quantity } : item))
         );
       }
-    } catch (error: any) {
-      console.error("Помилка оновлення кількості:", error.message);
-      toast.error(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error)
+      {
+        console.error("Помилка оновлення кількості:", error.message);
+        toast.error(`Помилка: ${error.message}`);
+      }
     }
   };
 
@@ -199,9 +206,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       setCart([]);
-    } catch (error: any) {
-      console.error("Помилка очищення корзини:", error.message);
-      toast.error(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Помилка очищення корзини:", error.message);
+        toast.error(`Помилка: ${error.message}`);
+      }
     }
   };
 

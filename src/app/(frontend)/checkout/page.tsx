@@ -18,15 +18,15 @@ import { getCookie } from "cookies-next"
 import { toast } from "sonner"
 
 interface CartItem {
-  id: string          // ID элемента корзины
-  productId: string   // ID продукта
-  name: string        // Название продукта (из product.name)
-  image: string       // Изображение продукта (из product.image)
-  price: number       // Цена продукта без скидки (из product.price)
-  quantity: number    // Количество (из CartItem.quantity)
-  stock?: number      // Запас продукта (из product.stock)
-  discount: number | 0 // Скидка на продукт в процентах (из product.discount)
-  isOnSale: boolean   // Находится ли товар на распродаже (из product.isOnSale)
+  id: string          // ID елемента кошика
+  productId: string   // ID продукту
+  name: string        // Назва продукту (з product.name)
+  image: string       // Зображення продукту (з product.image)
+  price: number       // Ціна продукту без знижки (з product.price)
+  quantity: number    // Кількість (з CartItem.quantity)
+  stock?: number      // Запас продукту (з product.stock)
+  discount: number | 0 // Знижка на продукт у відсотках (з product.discount)
+  isOnSale: boolean   // Чи є товар на розпродажі (з product.isOnSale)
 }
 
 interface Address {
@@ -52,7 +52,7 @@ interface CartResponse {
   items: CartItem[]
 }
 
-// Функция для форматирования элемента корзины из ответа API
+// Функція для форматування елемента кошика з відповіді API
 const formatApiCartItem = (apiItem: any): CartItem => {
   return {
     id: apiItem.id,
@@ -78,7 +78,7 @@ export default function CheckoutPage() {
   const [deliveryMethod, setDeliveryMethod] = useState("nova-poshta")
   const [comment, setComment] = useState("")
   const [loading, setLoading] = useState(false)
-  const [processing, setProcessing] = useState(false) // Для обновления количества и удаления
+  const [processing, setProcessing] = useState(false) // Для оновлення кількості та видалення
   const [success, setSuccess] = useState(false)
   const [showNewAddressForm, setShowNewAddressForm] = useState(false)
   const [newAddress, setNewAddress] = useState({
@@ -90,7 +90,7 @@ export default function CheckoutPage() {
     postal: "",
   })
 
-  // Расчет общей суммы и скидок
+  // Розрахунок загальної суми та знижок
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + item.price * item.quantity;
   }, 0);
@@ -102,19 +102,19 @@ export default function CheckoutPage() {
     return totalDiscountSum + itemDiscountAmount;
   }, 0);
 
-  // Динамическая цена доставки
+  // Динамічна ціна доставки
   const deliveryPrice = cartItems.length > 0 
     ? (deliveryMethod === "pickup" ? 0 : deliveryMethod === "nova-poshta" ? 50 : 40) 
     : 0;
 
-  // Итоговая сумма = (Сумма товаров - Общая скидка) + Доставка
+  // Загальна сума = (Сума товарів - Загальна знижка) + Доставка
   const total = subtotal - totalCalculatedDiscount + deliveryPrice;
 
   useEffect(() => {
     const token = getCookie("token")
 
     if (!token) {
-      toast.error("Пожалуйста, войдите в свой аккаунт.")
+      toast.error("Будь ласка, увійдіть у свій обліковий запис.")
       router.push("/")
       return
     }
@@ -136,16 +136,16 @@ export default function CheckoutPage() {
             setCartItems([])
           }
         } else if (response.status === 401) {
-          toast.error("Пожалуйста, войдите в свой аккаунт.")
+          toast.error("Будь ласка, увійдіть у свій обліковий запис.")
           router.push("/login")
         } else {
           const error = await response.json()
-          console.error("Ошибка загрузки корзины:", error)
-          toast.error(error.error || "Не удалось загрузить корзину. Попробуйте позже.")
+          console.error("Помилка завантаження кошика:", error)
+          toast.error(error.error || "Не вдалося завантажити кошик. Спробуйте пізніше.")
         }
       } catch (error) {
-        console.error("Ошибка загрузки корзины:", error)
-        toast.error("Произошла ошибка при соединении с сервером.")
+        console.error("Помилка завантаження кошика:", error)
+        toast.error("Сталася помилка під час з'єднання з сервером.")
       } finally {
         setLoading(false)
       }
@@ -160,14 +160,14 @@ export default function CheckoutPage() {
         })
 
         if (response.status === 401 || response.status === 403) {
-          toast.error("Сессия истекла. Пожалуйста, войдите снова.")
+          toast.error("Сесія закінчилася. Будь ласка, увійдіть знову.")
           router.push("/login")
           return
         }
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || "Не удалось загрузить адреса")
+          throw new Error(errorData.error || "Не вдалося завантажити адреси")
         }
 
         const data = await response.json()
@@ -182,7 +182,7 @@ export default function CheckoutPage() {
           setAddresses([])
         }
       } catch (err: any) {
-        console.warn(`Пропуск адресов из-за ошибки: ${err.message}`)
+        console.warn(`Пропуск адрес через помилку: ${err.message}`)
         setAddresses([])
       }
     }
@@ -196,14 +196,14 @@ export default function CheckoutPage() {
         })
 
         if (response.status === 401 || response.status === 403) {
-          toast.error("Сессия истекла. Пожалуйста, войдите снова.")
+          toast.error("Сесія закінчилася. Будь ласка, увійдіть знову.")
           router.push("/login")
           return
         }
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || "Не удалось загрузить способы оплаты")
+          throw new Error(errorData.error || "Не вдалося завантажити способи оплати")
         }
 
         const data = await response.json()
@@ -218,7 +218,7 @@ export default function CheckoutPage() {
           setPaymentMethods([])
         }
       } catch (err: any) {
-        console.warn(`Пропуск способов оплаты из-за ошибки: ${err.message}`)
+        console.warn(`Пропуск способів оплати через помилку: ${err.message}`)
         setPaymentMethods([])
       }
     }
@@ -247,16 +247,16 @@ export default function CheckoutPage() {
           setCartItems([])
         }
       } else if (response.status === 401) {
-        toast.error("Пожалуйста, войдите в свой аккаунт.")
+        toast.error("Будь ласка, увійдіть у свій обліковий запис.")
         router.push('/login')
       } else {
         const error = await response.json()
-        console.error('Ошибка загрузки корзины:', error)
-        toast.error(error.error || "Не удалось загрузить корзину. Попробуйте позже.")
+        console.error('Помилка завантаження кошика:', error)
+        toast.error(error.error || "Не вдалося завантажити кошик. Спробуйте пізніше.")
       }
     } catch (error) {
-      console.error('Ошибка загрузки корзины:', error)
-      toast.error("Произошла ошибка при соединении с сервером.")
+      console.error('Помилка завантаження кошикаThreshold', error)
+      toast.error("Сталася помилка під час з'єднання з сервером.")
     } finally {
       setLoading(false)
     }
@@ -282,7 +282,7 @@ export default function CheckoutPage() {
         const data = await response.json()
         if (data.message === "Товар удален из корзины") {
           setCartItems(prev => prev.filter(item => item.productId !== productId))
-          toast.success("Товар удален из корзины.")
+          toast.success("Товар видалено з кошика.")
         } else if (data.item) {
           const updatedItem = formatApiCartItem(data.item)
           setCartItems(prev => 
@@ -292,24 +292,24 @@ export default function CheckoutPage() {
                 : item
             )
           )
-          toast.success("Количество товара обновлено.")
+          toast.success("Кількість товару оновлено.")
         } else {
-          console.warn("Количество товара обновлено, но ответ API не содержит обновленный элемент:", data)
-          toast.info("Количество товара обновлено (возможно).")
+          console.warn("Кількість товару оновлено, але відповідь API не містить оновлений елемент:", data)
+          toast.info("Кількість товару оновлено (можливо).")
           fetchCart()
         }
       } else if (response.status === 401) {
-        toast.error("Пожалуйста, войдите в свой аккаунт.")
+        toast.error("Будь ласка, увійдіть у свій обліковий запис.")
         router.push('/login')
       } else {
         const error = await response.json()
-        console.error('Ошибка обновления количества:', error)
-        toast.error(error.error || "Не удалось обновить количество товара.")
+        console.error('Помилка оновлення кількості:', error)
+        toast.error(error.error || "Не вдалося оновити кількість товару.")
         fetchCart()
       }
     } catch (error) {
-      console.error('Ошибка обновления количества:', error)
-      toast.error("Произошла ошибка при обновлении количества.")
+      console.error('Помилка оновлення кількості:', error)
+      toast.error("Сталася помилка під час оновлення кількості.")
     } finally {
       setProcessing(false)
     }
@@ -329,19 +329,19 @@ export default function CheckoutPage() {
 
       if (response.ok) {
         setCartItems(prev => prev.filter(item => item.productId !== productId))
-        toast.success("Товар удален из корзины.")
+        toast.success("Товар видалено з кошика.")
       } else if (response.status === 401) {
-        toast.error("Пожалуйста, войдите в свой аккаунт.")
+        toast.error("Будь ласка, увійдіть у свій обліковий запис.")
         router.push('/login')
       } else {
         const error = await response.json()
-        console.error('Ошибка удаления товара:', error)
-        toast.error(error.error || "Не удалось удалить товар из корзины.")
+        console.error('Помилка видалення товару:', error)
+        toast.error(error.error || "Не вдалося видалити товар з кошика.")
         fetchCart()
       }
     } catch (error) {
-      console.error('Ошибка удаления товара:', error)
-      toast.error("Произошла ошибка при удалении товара.")
+      console.error('Помилка видалення товару:', error)
+      toast.error("Сталася помилка під час видалення товару.")
     } finally {
       setProcessing(false)
     }
@@ -354,7 +354,7 @@ export default function CheckoutPage() {
 
   const handleAddNewAddress = async () => {
     if (!newAddress.fullName || !newAddress.phone || !newAddress.address || !newAddress.city) {
-      toast.error("Пожалуйста, заполните все обязательные поля")
+      toast.error("Будь ласка, заповніть усі обов'язкові поля")
       return
     }
 
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Не удалось добавить адрес")
+        throw new Error(errorData.error || "Не вдалося додати адресу")
       }
 
       const data = await response.json()
@@ -399,9 +399,9 @@ export default function CheckoutPage() {
         city: "",
         postal: "",
       })
-      toast.success("Адрес успешно добавлен.")
+      toast.success("Адресу успішно додано.")
     } catch (err: any) {
-      toast.error(`Ошибка при добавлении адреса: ${err.message}`)
+      toast.error(`Помилка під час додавання адреси: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -410,13 +410,13 @@ export default function CheckoutPage() {
   const handleNextStep = () => {
     if (step === 1) {
       if (cartItems.length === 0) {
-        toast.error("Ваша корзина пуста")
+        toast.error("Ваш кошик порожній")
         return
       }
       setStep(2)
     } else if (step === 2) {
       if (!selectedAddress) {
-        toast.error("Пожалуйста, выберите адрес доставки")
+        toast.error("Будь ласка, виберіть адресу доставки")
         return
       }
       setStep(3)
@@ -429,7 +429,7 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!selectedPayment) {
-      toast.error("Пожалуйста, выберите способ оплаты")
+      toast.error("Будь ласка, виберіть спосіб оплати")
       return
     }
 
@@ -461,7 +461,7 @@ export default function CheckoutPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Не удалось оформить заказ")
+        throw new Error(errorData.error || "Не вдалося оформити замовлення")
       }
 
       setSuccess(true)
@@ -469,7 +469,7 @@ export default function CheckoutPage() {
         router.push("/checkout/success")
       }, 2000)
     } catch (err: any) {
-      toast.error(`Ошибка при оформлении заказа: ${err.message}`)
+      toast.error(`Помилка під час оформлення замовлення: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -490,17 +490,17 @@ export default function CheckoutPage() {
           <div className="bg-green-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
             <Check className="h-10 w-10 text-green-500" />
           </div>
-          <h1 className="text-3xl font-bold mb-4">Заказ успешно оформлен!</h1>
+          <h1 className="text-3xl font-bold mb-4">Замовлення успішно оформлено!</h1>
           <p className="text-gray-600 mb-8">
-            Спасибо за ваш заказ. Мы отправили детали на вашу электронную почту.
+            Дякуємо за ваше замовлення. Ми надіслали деталі на вашу електронну пошту.
           </p>
           <div className="flex justify-center gap-4">
-            <Button onClick={() => router.push("/profile")}>Перейти к профилю</Button>
+            <Button onClick={() => router.push("/profile")}>Перейти до профілю</Button>
             <Button variant="outline" onClick={() => router.push("/")}>
-              Вернуться на главную
+              Повернутися на головну
             </Button>
           </div>
-        </div>
+    </div>
       </div>
     )
   }
@@ -511,21 +511,21 @@ export default function CheckoutPage() {
         <div className="container mx-auto">
           <div className="flex items-center text-sm text-gray-600">
             <Link href="/" className="hover:text-primary">
-              Главная
+              Головна
             </Link>
             <span className="mx-2">/</span>
             <Link href="/cart" className="hover:text-primary">
-              Корзина
+              Кошик
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-900">Оформление заказа</span>
+            <span className="text-gray-900">Оформлення замовлення</span>
           </div>
         </div>
       </div>
 
       <section className="py-8 px-4 bg-white">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Оформление заказа</h1>
+          <h1 className="text-3xl font-bold mb-8">Оформлення замовлення</h1>
 
           <div className="mb-8">
             <div className="flex items-center justify-between max-w-3xl mx-auto">
@@ -535,7 +535,7 @@ export default function CheckoutPage() {
                 >
                   <ShoppingBag className="h-5 w-5" />
                 </div>
-                <span className="text-sm">Корзина</span>
+                <span className="text-sm">Кошик</span>
               </div>
               <div className={`flex-1 h-1 mx-2 ${step >= 2 ? "bg-primary" : "bg-gray-200"}`}></div>
               <div className={`flex flex-col items-center ${step >= 2 ? "text-primary" : "text-gray-400"}`}>
@@ -562,12 +562,12 @@ export default function CheckoutPage() {
             <div className="lg:col-span-2">
               {step === 1 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Товары в корзине</h2>
+                  <h2 className="text-xl font-semibold mb-4">Товари в кошику</h2>
 
                   {loading ? (
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
                       <ShoppingBag className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                      <p className="text-gray-500">Загрузка...</p>
+                      <p className="text-gray-500">Завантаження...</p>
                     </div>
                   ) : cartItems.length > 0 ? (
                     <div className="space-y-4">
@@ -628,7 +628,7 @@ export default function CheckoutPage() {
                                 disabled={processing}
                               >
                                 <Trash2 className="h-3 w-3 mr-1" />
-                                Удалить
+                                Видалити
                               </button>
                             </div>
                           </div>
@@ -638,12 +638,12 @@ export default function CheckoutPage() {
                   ) : (
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
                       <ShoppingBag className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Ваша корзина пуста</h3>
+                      <h3 className="text-lg font-medium mb-2">Ваш кошик порожній</h3>
                       <p className="text-gray-500 mb-6">
-                        Добавьте товары в корзину, чтобы продолжить оформление заказа
+                        Додайте товари до кошика, щоб продовжити оформлення замовлення
                       </p>
                       <Link href="/catalog">
-                        <Button>Перейти к каталогу</Button>
+                        <Button>Перейти до каталогу</Button>
                       </Link>
                     </div>
                   )}
@@ -652,7 +652,7 @@ export default function CheckoutPage() {
 
               {step === 2 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Адрес доставки</h2>
+                  <h2 className="text-xl font-semibold mb-4">Адреса доставки</h2>
 
                   {addresses.length > 0 && (
                     <div className="space-y-4 mb-6">
@@ -665,7 +665,7 @@ export default function CheckoutPage() {
                                 {address.title}
                                 {address.isDefault && (
                                   <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-                                    По умолчанию
+                                    За замовчуванням
                                   </span>
                                 )}
                               </Label>
@@ -698,7 +698,7 @@ export default function CheckoutPage() {
                             <Input
                               id="title"
                               name="title"
-                              placeholder="Например: Дом, Работа"
+                              placeholder="Наприклад: Дім, Робота"
                               value={newAddress.title}
                               onChange={handleNewAddressChange}
                             />
@@ -734,7 +734,7 @@ export default function CheckoutPage() {
                             />
                           </div>
                           <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="address">Адрес *</Label>
+                            <Label htmlFor="address">Адреса *</Label>
                             <Input
                               id="address"
                               name="address"
@@ -745,7 +745,7 @@ export default function CheckoutPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="postal">Почтовый индекс</Label>
+                            <Label htmlFor="postal">Поштовий індекс</Label>
                             <Input
                               id="postal"
                               name="postal"
@@ -759,23 +759,23 @@ export default function CheckoutPage() {
                             {loading ? "Збереження..." : "Зберегти адресу"}
                           </Button>
                           <Button variant="outline" onClick={() => setShowNewAddressForm(false)}>
-                            Отмена
+                            Скасувати
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
                   )}
 
-                  <h2 className="text-xl font-semibold mb-4">Способ доставки</h2>
+                  <h2 className="text-xl font-semibold mb-4">Спосіб доставки</h2>
 
                   <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod} className="space-y-4 mb-6">
                     <div className="flex items-start">
                       <RadioGroupItem value="nova-poshta" id="nova-poshta" className="mt-1" />
                       <div className="ml-3 flex-1">
                         <Label htmlFor="nova-poshta" className="font-medium">
-                          Новая Почта
+                          Нова Пошта
                         </Label>
-                        <p className="text-sm text-gray-600">Доставка 1-3 дня</p>
+                        <p className="text-sm text-gray-600">Доставка 1-3 дні</p>
                       </div>
                       <div className="font-medium">50 ₴</div>
                     </div>
@@ -783,9 +783,9 @@ export default function CheckoutPage() {
                       <RadioGroupItem value="ukrposhta" id="ukrposhta" className="mt-1" />
                       <div className="ml-3 flex-1">
                         <Label htmlFor="ukrposhta" className="font-medium">
-                          Укрпочта
+                          Укрпошта
                         </Label>
-                        <p className="text-sm text-gray-600">Доставка 3-5 дней</p>
+                        <p className="text-sm text-gray-600">Доставка 3-5 днів</p>
                       </div>
                       <div className="font-medium">40 ₴</div>
                     </div>
@@ -793,11 +793,11 @@ export default function CheckoutPage() {
                       <RadioGroupItem value="pickup" id="pickup" className="mt-1" />
                       <div className="ml-3 flex-1">
                         <Label htmlFor="pickup" className="font-medium">
-                          Самовывоз
+                          Самовивіз
                         </Label>
-                        <p className="text-sm text-gray-600">г. Киев, ул. Крещатик, 1</p>
+                        <p className="text-sm text-gray-600">м. Київ, вул. Хрещатик, 1</p>
                       </div>
-                      <div className="font-medium">Бесплатно</div>
+                      <div className="font-medium">Безкоштовно</div>
                     </div>
                   </RadioGroup>
                 </div>
@@ -805,7 +805,7 @@ export default function CheckoutPage() {
 
               {step === 3 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Способ оплаты</h2>
+                  <h2 className="text-xl font-semibold mb-4">Спосіб оплати</h2>
 
                   <RadioGroup
                     value={selectedPayment || ""}
@@ -842,7 +842,7 @@ export default function CheckoutPage() {
                   <h2 className="text-xl font-semibold mb-4">Коментар до замовлення</h2>
                   <div className="mb-6">
                     <Textarea
-                      placeholder="Додаткова інформація на замовлення (необов'язково)"
+                      placeholder="Додаткова інформація до замовлення (необов’язково)"
                       className="min-h-[100px]"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
@@ -858,15 +858,15 @@ export default function CheckoutPage() {
                   </Button>
                 ) : (
                   <Link href="/cart">
-                    <Button variant="outline">Вернуться в корзину</Button>
+                    <Button variant="outline">Повернутися до кошика</Button>
                   </Link>
                 )}
 
                 {step < 3 ? (
-                  <Button onClick={handleNextStep}>Продолжить</Button>
+                  <Button onClick={handleNextStep}>Продовжити</Button>
                 ) : (
                   <Button onClick={handlePlaceOrder} disabled={loading} className="min-w-[150px]">
-                    {loading ? "Оформление..." : "Оформить заказ"}
+                    {loading ? "Оформлення..." : "Оформити замовлення"}
                   </Button>
                 )}
               </div>
@@ -874,12 +874,12 @@ export default function CheckoutPage() {
 
             <div>
               <div className="bg-gray-50 rounded-lg p-6 sticky top-4">
-                <h2 className="text-xl font-semibold mb-4">Итог заказа</h2>
+                <h2 className="text-xl font-semibold mb-4">Підсумок замовлення</h2>
 
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between">
                     <span className="text-gray-600">
-                      Товары (
+                      Товари (
                       {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
                       )
                     </span>
@@ -887,7 +887,7 @@ export default function CheckoutPage() {
                   </div>
                   {totalCalculatedDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
-                      <span>Скидка:</span>
+                      <span>Знижка:</span>
                       <span>-{totalCalculatedDiscount.toFixed(2)} ₴</span>
                     </div>
                   )}
@@ -900,18 +900,18 @@ export default function CheckoutPage() {
                 <Separator className="my-4" />
 
                 <div className="flex justify-between font-bold text-lg">
-                  <span>Итоговая сумма</span>
+                  <span>Загальна сума</span>
                   <span>{total.toFixed(2)} ₴</span>
                 </div>
 
                 {step === 3 && (
                   <div className="mt-6">
                     <p className="text-sm text-gray-600 mb-4">
-                      Нажимая кнопку "Оформить заказ", вы соглашаетесь с нашими условиями использования и
-                      политикой конфиденциальности.
+                      Натискаючи кнопку "Оформити замовлення", ви погоджуєтеся з нашими умовами використання та
+                      політикою конфіденційності.
                     </p>
                     <Button onClick={handlePlaceOrder} disabled={loading} className="w-full">
-                      {loading ? "Оформление..." : "Оформить заказ"}
+                      {loading ? "Оформлення..." : "Оформити замовлення"}
                     </Button>
                   </div>
                 )}
@@ -920,11 +920,11 @@ export default function CheckoutPage() {
               <div className="mt-6 bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center text-sm text-gray-600 mb-2">
                   <CreditCard className="h-4 w-4 mr-2" />
-                  <span>Безопасная оплата</span>
+                  <span>Безпечна оплата</span>
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Truck className="h-4 w-4 mr-2" />
-                  <span>Быстрая доставка по всей Украине</span>
+                  <span>Швидка доставка по всій Україні</span>
                 </div>
               </div>
             </div>

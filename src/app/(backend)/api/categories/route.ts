@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { promises as fs } from "fs";
 import path from "path";
 
-// Визначаємо інтерфейс для JWT payload
+// Інтерфейс для payload JWT
 interface JWTPayload {
   id: string;
   role: string;
@@ -12,10 +12,17 @@ interface JWTPayload {
   exp: number;
 }
 
+// Інтерфейс для помилок
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 // Функція для обробки GET-запиту (отримання всіх категорій)
 export async function GET(request: NextRequest) {
   try {
-    // Перевірка авторизації (необов’язкова)
+    // Перевірка авторизації (необов'язкова)
     let isAdmin = false;
     const authHeader = request.headers.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -36,7 +43,6 @@ export async function GET(request: NextRequest) {
         name: true,
         slug: isAdmin ? true : undefined,
         description: isAdmin ? true : undefined,
-        image: true,
         _count: {
           select: {
             products: true,
@@ -53,11 +59,12 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ categories: formattedCategories }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
 
@@ -80,25 +87,9 @@ export async function POST(request: NextRequest) {
     const name = formData.get("name") as string;
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
-    const imageFile = formData.get("image") as File | null;
 
     if (!name || !slug) {
       return NextResponse.json({ error: "Назва та slug є обов'язковими" }, { status: 400 });
-    }
-
-    let imagePath: string | null = null;
-    if (imageFile) {
-      // Конвертуємо File у Buffer
-      const buffer = Buffer.from(await imageFile.arrayBuffer());
-      const fileName = `${Date.now()}-${imageFile.name}`;
-      const filePath = path.join("public/uploads", fileName);
-
-      // Зберігаємо файл
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, buffer);
-
-      // Зберігаємо відносний шлях до файлу
-      imagePath = `/uploads/${fileName}`;
     }
 
     // Створюємо нову категорію у базі даних
@@ -106,17 +97,17 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         slug,
-        description,
-        image: imagePath,
+        description
       },
     });
 
     return NextResponse.json({ category }, { status: 201 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message || "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
 

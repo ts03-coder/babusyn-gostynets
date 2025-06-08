@@ -7,10 +7,34 @@ import { Check, Package, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getCookie } from "cookies-next"
 
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface Address {
+  id: string;
+  fullName: string;
+  address: string;
+  city: string;
+  postal: string;
+  phone: string;
+}
+
+interface Order {
+  id: string;
+  items: OrderItem[];
+  addressId?: string;
+  deliveryMethod?: string;
+  paymentId?: string;
+}
+
 export default function CheckoutSuccessPage() {
   const router = useRouter()
-  const [order, setOrder] = useState<any>(null)
-  const [address, setAddress] = useState<any>(null)
+  const [order, setOrder] = useState<Order | null>(null)
+  const [address, setAddress] = useState<Address | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,8 +85,12 @@ export default function CheckoutSuccessPage() {
         } else {
           setError("Замовлення не знайдено")
         }
-      } catch (err: any) {
-        setError(err.message || "Помилка при завантаженні замовлення")
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message || "Помилка при завантаженні замовлення")
+        } else {
+          setError("Помилка при завантаженні замовлення")
+        }
       } finally {
         setLoading(false)
       }
@@ -87,8 +115,8 @@ export default function CheckoutSuccessPage() {
   }
 
   // Розрахунок загальної кількості товарів
-  const itemCount = order.items.reduce((sum: number, item: any) => sum + item.quantity, 0)
-  const subtotal = order.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+  const itemCount = order.items.reduce((sum: number, item: OrderItem) => sum + item.quantity, 0)
+  const subtotal = order.items.reduce((sum: number, item: OrderItem) => sum + item.price * item.quantity, 0)
   const deliveryPrice = 50.00 // Фіксована вартість доставки
   const total = subtotal + deliveryPrice
 

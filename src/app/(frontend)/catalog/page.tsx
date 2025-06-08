@@ -31,6 +31,14 @@ interface Product {
   createdAt: string;
 }
 
+interface ApiError extends Error {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
+
 const sortOptions = [
   { value: "popular", label: "За популярністю" },
   { value: "price-asc", label: "Від дешевих до дорогих" },
@@ -56,6 +64,7 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const productsPerPage = 9;
+  const [error, setError] = useState<string | null>(null);
 
   // Завантаження даних при зміні фільтрів або сторінки
   useEffect(() => {
@@ -97,8 +106,10 @@ export default function CatalogPage() {
         }
         setProducts(productsData.products);
         setTotalPages(Math.ceil(productsData.total / productsPerPage));
-      } catch (error: any) {
-        toast.error(`Помилка: ${error.message}`);
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        console.error("Помилка при отриманні товарів:", apiError);
+        setError(apiError.response?.data?.error || "Помилка при завантаженні товарів");
       } finally {
         setIsLoading(false);
       }

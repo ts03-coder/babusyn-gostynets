@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -22,6 +22,14 @@ interface CartItem {
   isOnSale: boolean   // Додаємо isOnSale (з product.isOnSale)
 }
 
+interface ApiError extends Error {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
+
 // Допоміжна функція для форматування елемента кошика з відповіді API
 const formatApiCartItem = (apiItem: any): CartItem => {
   return {
@@ -38,12 +46,12 @@ const formatApiCartItem = (apiItem: any): CartItem => {
 };
 
 export default function CartPage() {
+  const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
-  const router = useRouter()
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setLoading(true)
       const token = getCookie("token")
@@ -68,8 +76,8 @@ export default function CartPage() {
           setCartItems([])
         }
       } else if (response.status === 401) {
-        toast.success("Будь ласка, увійдіть у свій обліковий запис.")
-        router.push('/')
+        toast.error("Будь ласка, увійдіть у свій обліковий запис.")
+        router.push('/login')
       } else {
         const error = await response.json()
         console.error('Помилка завантаження кошика:', error)
@@ -81,7 +89,17 @@ export default function CartPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    const token = getCookie("token")
+    if (token) {
+      fetchCart()
+    } else {
+      setLoading(false)
+      setCartItems([])
+    }
+  }, [])
 
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
@@ -199,10 +217,6 @@ export default function CartPage() {
     }
   }
 
-  useEffect(() => {
-    fetchCart()
-  }, [])
-
   // Розрахунок загальної суми та знижок
   const subtotal = cartItems.reduce((sum, item) => { // Сума товарів (за оригінальними цінами)
     return sum + item.price * item.quantity;
@@ -286,7 +300,7 @@ export default function CartPage() {
                   <div className="space-y-4">
                     {cartItems.map((item) => {
                       const pricePerUnit = item.price; // Оригінальна ціна за одиницю
-                      const totalOriginalPriceForLine = pricePerUnit * item.quantity;
+                      const totalPriceForLine = item.quantity * item.price;
                       // Ціна зі знижкою для цього товару
                       const discountedPricePerUnit = item.isOnSale && item.discount > 0 
                         ? pricePerUnit * (1 - item.discount / 100)

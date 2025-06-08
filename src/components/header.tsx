@@ -43,7 +43,6 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
 
   const { data: searchResults, isLoading } = useSWR(
     debouncedQuery.trim() ? `/api/products?search=${debouncedQuery}&limit=5` : null,
@@ -71,10 +70,14 @@ export default function Header() {
         email: response.data.user.email || "",
       });
       setIsAuthenticated(true);
-    } catch (error: any) {
-      if (axios.isAxiosError(error) && (error.response?.status === 401 || error.response?.status === 403)) {
+    } catch (error: unknown) {
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.status === 401 || error.response?.status === 403)
+      ) {
         deleteCookie("token");
       }
+
       setIsAuthenticated(false);
       setUser(null);
     }
@@ -130,8 +133,6 @@ export default function Header() {
                   placeholder="Пошук товарів..."
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  onFocus={() => debouncedQuery.trim() && setIsSearchResultsVisible(true)}
-                  onBlur={() => setTimeout(() => setIsSearchResultsVisible(false), 200)}
                   className="pl-10 pr-4 py-2 w-full rounded-full border focus:ring-2 focus:ring-primary focus:border-primary"
                 />
 

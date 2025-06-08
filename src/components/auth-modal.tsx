@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import Image from "next/image";
 import axios from "axios";
 import { toast } from "sonner";
 import { setCookie } from "cookies-next";
@@ -108,8 +107,8 @@ const handleRegisterSubmit = async (e: React.FormEvent) => {
       onAuthSuccess();
       onClose();
     }
-  } catch (err: any) {
-    if (err.response?.data?.error) {
+    } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.data?.error) {
       toast.error(err.response.data.error);
     } else {
       toast.error("Щось пішло не так. Спробуйте ще раз.");
@@ -146,13 +145,14 @@ const handleLoginSubmit = async (e: React.FormEvent) => {
       onAuthSuccess();
       onClose();
     }
-  } catch (err: any) {
-    if (err.response?.data?.error) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.data?.error) {
       toast.error(err.response.data.error);
     } else {
       toast.error("Щось пішло не так. Спробуйте ще раз.");
     }
-  } finally {
+  } 
+  finally {
     setLoading(false);
   }
 };
@@ -347,6 +347,10 @@ const handleLoginSubmit = async (e: React.FormEvent) => {
             </form>
           </TabsContent>
         </Tabs>
+
+        <p className="text-sm text-muted-foreground">
+          Ми&apos;луюсь, але наразі ми не можемо обробити ваш запит. Будь ласка, спробуйте пізніше.
+        </p>
       </DialogContent>
     </Dialog>
   );

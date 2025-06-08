@@ -32,7 +32,6 @@ interface Category {
   slug: string
   description: string
   productsCount: number
-  image: string | null
 }
 
 export default function CategoriesPage() {
@@ -119,8 +118,6 @@ export default function CategoriesPage() {
       const name = (document.getElementById("new-name") as HTMLInputElement).value
       const slug = (document.getElementById("new-slug") as HTMLInputElement).value
       const description = (document.getElementById("new-description") as HTMLTextAreaElement).value
-      const imageInput = document.getElementById("new-image") as HTMLInputElement
-      const imageFile = imageInput.files?.[0] || null
 
       if (!name || !slug) {
         throw new Error("Назва та slug є обов'язковими")
@@ -130,9 +127,6 @@ export default function CategoriesPage() {
       formData.append("name", name)
       formData.append("slug", slug)
       formData.append("description", description)
-      if (imageFile) {
-        formData.append("image", imageFile)
-      }
 
       const response = await fetch("/api/categories", {
         method: "POST",
@@ -169,8 +163,6 @@ export default function CategoriesPage() {
       const name = (document.getElementById("name") as HTMLInputElement).value
       const slug = (document.getElementById("slug") as HTMLInputElement).value
       const description = (document.getElementById("description") as HTMLTextAreaElement).value
-      const imageInput = document.getElementById("image") as HTMLInputElement
-      const imageFile = imageInput.files?.[0] || null
 
       if (!name || !slug) {
         throw new Error("Назва та slug є обов'язковими")
@@ -181,9 +173,6 @@ export default function CategoriesPage() {
       formData.append("name", name)
       formData.append("slug", slug)
       formData.append("description", description)
-      if (imageFile) {
-        formData.append("image", imageFile)
-      }
 
       const response = await fetch(`/api/categories/${selectedCategory.id}`, {
         method: "PUT",
@@ -299,15 +288,6 @@ export default function CategoriesPage() {
                       <TableRow key={category.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded bg-gray-100 overflow-hidden">
-                              <Image
-                                src={category.image || "/placeholder.svg"}
-                                alt={category.name}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
                             <div>
                               <div className="font-medium">{category.name}</div>
                               <div className="text-xs text-gray-500">{category.id}</div>
@@ -367,15 +347,6 @@ export default function CategoriesPage() {
           {selectedCategory && (
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="h-20 w-20 rounded bg-gray-100 overflow-hidden">
-                  <Image
-                    src={selectedCategory.image || "/placeholder.svg"}
-                    alt={selectedCategory.name}
-                    width={80}
-                    height={80}
-                    className="object-cover"
-                  />
-                </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold">{selectedCategory.name}</h3>
                   <p className="text-gray-500">{selectedCategory.id}</p>
@@ -478,23 +449,6 @@ export default function CategoriesPage() {
                   defaultValue={selectedCategory.description}
                 ></textarea>
               </div>
-              <div className="space-y-2">
-                <label htmlFor="image" className="text-sm font-medium">
-                  Зображення
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded bg-gray-100 overflow-hidden">
-                    <Image
-                      src={selectedCategory.image || "/placeholder.svg"}
-                      alt={selectedCategory.name}
-                      width={64}
-                      height={64}
-                      className="object-cover"
-                    />
-                  </div>
-                  <Input id="image" type="file" accept="image/*" />
-                </div>
-              </div>
             </div>
           )}
           <DialogFooter>
@@ -568,12 +522,6 @@ export default function CategoriesPage() {
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[100px]"
                 placeholder="Введіть опис категорії..."
               />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="new-image" className="text-sm font-medium">
-                Зображення
-              </label>
-              <Input id="new-image" type="file" accept="image/*" />
             </div>
           </div>
           <DialogFooter>

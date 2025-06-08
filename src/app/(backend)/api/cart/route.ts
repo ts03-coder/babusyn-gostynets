@@ -8,6 +8,13 @@ interface JWTPayload {
   role: string;
 }
 
+// Інтерфейс для помилок
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  stack?: string;
+}
+
 // GET: Отримання корзини користувача
 export async function GET(request: NextRequest) {
   try {
@@ -67,13 +74,14 @@ export async function GET(request: NextRequest) {
 
     console.log(`Корзина для користувача ${decoded.id} знайдена:`, cart);
     return NextResponse.json({ items: cart.items }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
     console.error("Помилка в GET /api/cart:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: apiError.message,
+      stack: apiError.stack,
+      name: apiError.name,
     });
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
@@ -208,13 +216,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ item: newItem }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
     console.error("Помилка в POST /api/cart:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: apiError.message,
+      stack: apiError.stack,
+      name: apiError.name,
     });
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
@@ -279,13 +288,14 @@ export async function DELETE(request: NextRequest) {
       console.log(`Корзина користувача ${decoded.id} очищена`);
       return NextResponse.json({ message: "Корзина очищена" }, { status: 200 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
     console.error("Помилка в DELETE /api/cart:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: apiError.message,
+      stack: apiError.stack,
+      name: apiError.name,
     });
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
@@ -387,13 +397,14 @@ export async function PATCH(request: NextRequest) {
 
     console.log(`Кількість товару ${productId} оновлено до ${quantity}`);
     return NextResponse.json({ item: updatedItem }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
     console.error("Помилка в PATCH /api/cart:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: apiError.message,
+      stack: apiError.stack,
+      name: apiError.name,
     });
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });

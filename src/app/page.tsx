@@ -7,6 +7,14 @@ import ProductCard from "@/components/product-card";
 import { CartProvider } from "@/lib/CartContext";
 import axios from "axios";
 
+// Создаем api за пределами компонента
+const api = axios.create({
+  baseURL: "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 interface Product {
   id: string;
   name: string;
@@ -34,13 +42,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const api = axios.create({
-    baseURL: "/api",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -65,16 +66,18 @@ export default function Home() {
       setSaleProducts(saleData.products || []);
       setNewProducts(newData.products || []);
       setSlides(slidesData.slides || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         setErrorMessage(`Помилка: ${error.response?.data?.error || error.message}`);
-      } else {
+      } else if (error instanceof Error) {
         setErrorMessage(`Помилка: ${error.message}`);
+      } else {
+        setErrorMessage("Сталася невідома помилка.");
       }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Убираем api из зависимостей
 
   useEffect(() => {
     fetchData();
@@ -104,7 +107,6 @@ export default function Home() {
             fill
             className="object-cover"
             priority={currentSlide === 0}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/40">
             <h1 className="text-4xl font-bold mb-2">{slides[currentSlide].title}</h1>
