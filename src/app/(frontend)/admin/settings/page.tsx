@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -229,7 +230,7 @@ export default function SlidesAdminPage() {
               />
               {imagePreview && (
                 <div className="mt-2">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Попередній перегляд"
                     className="w-32 h-32 object-cover rounded"
@@ -272,7 +273,7 @@ export default function SlidesAdminPage() {
                 className="flex items-center justify-between p-4 hover:bg-gray-50"
               >
                 <div className="flex items-center gap-4">
-                  <img
+                  <Image
                     src={slide.image}
                     alt={slide.title}
                     className="w-16 h-16 object-cover rounded"

@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 import { promises as fs } from "fs";
 import path from "path";
+import { Prisma } from "@prisma/client";
 
 // Визначаємо інтерфейс для JWT payload
 interface JWTPayload {
@@ -12,10 +13,39 @@ interface JWTPayload {
   exp: number;
 }
 
+// Інтерфейс для помилок
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
+// Типи для фільтрів
+interface ProductWhere {
+  name?: {
+    contains: string;
+    mode: "insensitive";
+  };
+  categoryId?: {
+    in: string[];
+  };
+  price?: {
+    gte: number;
+    lte: number;
+  };
+  isOnSale?: boolean;
+}
+
+interface ProductOrderBy {
+  price?: "asc" | "desc";
+  createdAt?: "desc";
+  id?: "asc";
+}
+
 // Функція для обробки GET-запиту (отримання всіх продуктів)
 export async function GET(request: NextRequest) {
   try {
-    // Перевірка авторизації (необов’язкова)
+    // Перевірка авторизації (необов'язкова)
     let isAdmin = false;
     const authHeader = request.headers.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -39,7 +69,7 @@ export async function GET(request: NextRequest) {
     const sort = url.searchParams.get("sort") || "popular";
 
     // Побудова умов для фільтрації
-    const where: any = {};
+    const where: ProductWhere = {};
 
     if (search) {
       where.name = {
@@ -64,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Побудова сортування
-    const orderBy: any = {};
+    const orderBy: ProductOrderBy = {};
     switch (sort) {
       case "price-asc":
         orderBy.price = "asc";
@@ -112,8 +142,9 @@ export async function GET(request: NextRequest) {
 
     console.log("Products:", products); // Додано для налагодження
     return NextResponse.json({ products, total }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
@@ -197,11 +228,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ product }, { status: 201 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message || "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
 

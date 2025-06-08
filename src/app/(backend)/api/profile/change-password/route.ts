@@ -3,6 +3,19 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import prisma from '@/lib/prisma';
 
+interface DecodedToken {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 export async function PUT(request: Request) {
   try {
     // Перевірка авторизації
@@ -12,8 +25,8 @@ export async function PUT(request: Request) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    const userId = decoded.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+    const userId = Number(decoded.id);
 
     // Отримуємо дані з тіла запиту
     const { currentPassword, newPassword } = await request.json();
@@ -58,8 +71,12 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json({ message: 'Password changed successfully' });
-  } catch (error) {
-    console.error('Password change error:', error);
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error('Password change error:', apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+      return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

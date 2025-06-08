@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import prisma  from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 interface JWTPayload {
   id: string;
   role: string;
+}
+
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -30,10 +36,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ users }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message || "Внутрішня помилка сервера" }, { status: 500 });
+    console.error('Error fetching users:', apiError);
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }

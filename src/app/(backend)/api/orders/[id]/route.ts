@@ -2,19 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-// Інтерфейс для payload JWT
-interface JWTPayload {
-  id: string;
-  role: string;
-  iat: number;
-  exp: number;
-}
-
 // Інтерфейс для помилок
 interface ApiError extends Error {
   name: string;
   message: string;
   code?: string;
+}
+
+interface DecodedToken {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
 }
 
 const verifyToken = (authHeader: string | null) => {
@@ -24,9 +23,10 @@ const verifyToken = (authHeader: string | null) => {
 
   const token = authHeader.split(" ")[1];
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
     return decoded.id;
-  } catch (err) {
+  } catch (error) {
+    console.error("Помилка верифікації токена:", error);
     throw new Error("Недійсний токен");
   }
 };
@@ -39,17 +39,17 @@ interface UpdateOrderInput {
 // GET /:id - Отримання окремого замовлення
 export async function GET_ID(request: Request, { params }: { params: { id: string } }) {
   try {
-    const userId = verifyToken(request.headers.get("Authorization"));
-    const orderId = parseInt(params.id);
+    const userId = Number(verifyToken(request.headers.get("Authorization")));
+    const orderId = Number(params.id);
 
-    if (isNaN(orderId)) {
-      return NextResponse.json({ error: "Недійсний ID замовлення" }, { status: 400 });
+    if (isNaN(orderId) || isNaN(userId)) {
+      return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
     }
 
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId,
+        userId: userId,
       },
       include: {
         items: {
@@ -98,11 +98,11 @@ export async function GET_ID(request: Request, { params }: { params: { id: strin
 // PUT /:id - Оновлення замовлення (статусу та коментаря)
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const userId = verifyToken(request.headers.get("Authorization"));
-    const orderId = parseInt(params.id);
+    const userId = Number(verifyToken(request.headers.get("Authorization")));
+    const orderId = Number(params.id);
 
-    if (isNaN(orderId)) {
-      return NextResponse.json({ error: "Недійсний ID замовлення" }, { status: 400 });
+    if (isNaN(orderId) || isNaN(userId)) {
+      return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
     }
 
     const body: UpdateOrderInput = await request.json();
@@ -125,7 +125,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const existingOrder = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId,
+        userId: userId,
       },
     });
 
@@ -174,17 +174,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 // DELETE /:id - Видалення замовлення
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const userId = verifyToken(request.headers.get("Authorization"));
-    const orderId = parseInt(params.id);
+    const userId = Number(verifyToken(request.headers.get("Authorization")));
+    const orderId = Number(params.id);
 
-    if (isNaN(orderId)) {
-      return NextResponse.json({ error: "Недійсний ID замовлення" }, { status: 400 });
+    if (isNaN(orderId) || isNaN(userId)) {
+      return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
     }
 
     const existingOrder = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId,
+        userId: userId,
       },
     });
 

@@ -462,7 +462,7 @@ export default function ProfilePage() {
                     {orders.length > 0 ? (
                       <div className="space-y-6">
                         {orders.map((order) => (
-                          <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
+                          <div key={`order-${order.id}`} className="bg-white rounded-lg shadow-sm p-6">
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                               <div>
                                 <div className="flex items-center">
@@ -488,8 +488,8 @@ export default function ProfilePage() {
                             <Separator className="my-4" />
 
                             <div className="space-y-3">
-                              {order.items.map((item) => (
-                                <div key={item.id} className="flex justify-between">
+                              {order.items.map((item, index) => (
+                                <div key={`order-item-${item.id || index}`} className="flex justify-between">
                                   <div className="flex items-center">
                                     <span className="text-gray-800">
                                       {item.name} × {item.quantity}
@@ -527,7 +527,7 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {addresses.map((address) => (
-                        <div key={address.id} className="bg-white rounded-lg shadow-sm p-6 relative">
+                        <div key={`address-${address.id}`} className="bg-white rounded-lg shadow-sm p-6 relative">
                           {address.isDefault && (
                             <Badge className="absolute top-4 right-4" variant="outline">
                               За замовчуванням
@@ -564,7 +564,7 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {paymentMethods.map((card) => (
-                        <div key={card.id} className="bg-white rounded-lg shadow-sm p-6 relative">
+                        <div key={`payment-${card.id}`} className="bg-white rounded-lg shadow-sm p-6 relative">
                           {card.isDefault && (
                             <Badge className="absolute top-4 right-4" variant="outline">
                               За замовчуванням

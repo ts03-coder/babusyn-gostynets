@@ -10,35 +10,56 @@ import { CartProvider } from "@/lib/CartContext";
 const inter = Inter({ subsets: ["latin", "cyrillic"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "ТМ Бабусин Гостинець - Натуральні м'ясні продукти України",
-  description:
-    "ТМ Бабусин Гостинець пропонує якісні м'ясні вироби: ковбаси, шинки, делікатеси. Натуральні інгредієнти, традиційні рецепти, українська якість.",
-  keywords: "м'ясні продукти, ТМ Бабусин Гостинець, ковбаси, натуральні делікатеси, український виробник, шинки, м'ясо",
+  metadataBase: new URL('https://babusyn-gostynets.vercel.app'),
+  title: {
+    default: 'Бабусин Гостинець - Інтернет-магазин',
+    template: '%s | Бабусин Гостинець'
+  },
+  description: 'Інтернет-магазин Бабусин Гостинець - широкий вибір товарів за доступними цінами. Швидка доставка по всій Україні.',
+  keywords: ['інтернет-магазин', 'мясні продукти', 'свіже м\'ясо', 'доставка', 'акції', 'знижки'],
+  authors: [{ name: 'Бабусин Гостинець' }],
+  creator: 'Бабусин Гостинець',
+  publisher: 'Бабусин Гостинець',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
-    title: "ТМ Бабусин Гостинець - Смачні м'ясні делікатеси",
-    description:
-      "Смак натуральних м'ясних продуктів від ТМ Бабусин Гостинець. Ковбаси, шинки та делікатеси за традиційними українськими рецептами.",
-    url: "https://babusyn-gostynets.com.ua", // Replace with actual URL
-    siteName: "ТМ Бабусин Гостинець",
+    type: 'website',
+    locale: 'uk_UA',
+    url: 'https://babusyn-gostynets.vercel.app',
+    siteName: 'Бабусин Гостинець',
+    title: 'Бабусин Гостинець - Інтернет-магазин',
+    description: 'Інтернет-магазин Бабусин Гостинець - широкий вибір товарів за доступними цінами. Швидка доставка по всій Україні.',
     images: [
       {
-        url: "https://babusyn-gostynets.com.ua/og-image.jpg", // Replace with actual image URL
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: "М'ясні продукти ТМ Бабусин Гостинець",
-      },
-    ],
-    locale: "uk_UA",
-    type: "website",
+        alt: 'Бабусин Гостинець'
+      }
+    ]
   },
   twitter: {
-    card: "summary_large_image",
-    title: "ТМ Бабусин Гостинець - Натуральні м'ясні продукти",
-    description:
-      "Спробуйте смачні ковбаси, шинки та делікатеси від ТМ Бабусин Гостинець, виготовлені за українськими традиціями.",
-    images: ["https://babusyn-gostynets.com.ua/twitter-image.jpg"], // Replace with actual image URL
+    card: 'summary_large_image',
+    title: 'Бабусин Гостинець - Інтернет-магазин',
+    description: 'Інтернет-магазин Бабусин Гостинець - широкий вибір товарів за доступними цінами. Швидка доставка по всій Україні.',
+    images: ['/og-image.jpg'],
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  }
 };
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

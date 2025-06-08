@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
 
+interface DecodedToken {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 export async function GET(request: Request, { params }: { params: { id: string } }) {
     try {
       const authHeader = request.headers.get('Authorization');
@@ -10,12 +23,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
       }
   
       const token = authHeader.split(' ')[1];
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-      const userId = decoded.id;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+      const userId = Number(decoded.id);
   
-      const addressId = parseInt(params.id); // Помилка: params.id використовується синхронно
-      if (isNaN(addressId)) {
-        return NextResponse.json({ error: 'Invalid address ID' }, { status: 400 });
+      const addressId = parseInt(params.id);
+      if (isNaN(addressId) || isNaN(userId)) {
+        return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
       }
   
       const address = await prisma.address.findUnique({
@@ -27,8 +40,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
       }
   
       return NextResponse.json({ address });
-    } catch (error) {
-      console.error('Error fetching address:', error);
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error('Error fetching address:', apiError);
+      if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+        return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
+      }
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-  }
+}

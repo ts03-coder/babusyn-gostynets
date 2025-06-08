@@ -12,6 +12,13 @@ interface JWTPayload {
   exp: number;
 }
 
+// Інтерфейс для помилок
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params;
@@ -58,11 +65,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     
     console.log("Formatted product:", formattedProduct);
     return NextResponse.json({ product: formattedProduct }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message || "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
 
@@ -165,11 +173,12 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json({ product }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message || "Внутрішня помилка сервера" }, { status: 500 });
+    return NextResponse.json({ error: apiError.message || "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
 
@@ -222,9 +231,10 @@ export async function DELETE(
     });
 
     return NextResponse.json({ message: "Продукт успішно видалено" }, { status: 200 });
-  } catch (error: any) {
-    console.error(`Error in DELETE /api/products/${id}:`, error); // id is now accessible
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error(`Error in DELETE /api/products/${id}:`, apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });

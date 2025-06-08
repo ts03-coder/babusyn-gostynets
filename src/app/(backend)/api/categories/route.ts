@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
-import path from "path";
 
 // Інтерфейс для payload JWT
 interface JWTPayload {

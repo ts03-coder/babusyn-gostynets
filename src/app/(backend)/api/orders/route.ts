@@ -2,19 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-// Інтерфейс для payload JWT
-interface JWTPayload {
-  id: string;
-  role: string;
-  iat: number;
-  exp: number;
-}
-
 // Інтерфейс для помилок
 interface ApiError extends Error {
   name: string;
   message: string;
   code?: string;
+}
+
+interface DecodedToken {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
 }
 
 // Типи для типізації даних
@@ -47,19 +46,21 @@ const verifyToken = (authHeader: string | null) => {
 
   const token = authHeader.split(" ")[1];
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    return decoded.id;
-  } catch (err) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+    return decoded;
+  } catch (error) {
+    console.error("Помилка верифікації токена:", error);
     throw new Error("Недійсний токен");
   }
 };
 
 export async function GET(request: Request) {
   try {
-    const { userId, role } = verifyToken(request.headers.get("Authorization"));
+    const decoded = verifyToken(request.headers.get("Authorization"));
+    const userId = Number(decoded.id);
 
     // Перевірка, чи є користувач адміністратором
-    if (role !== "ADMIN") {
+    if (decoded.role !== "ADMIN") {
       // Якщо не адмін, повертаємо лише замовлення користувача
       const orders = await prisma.order.findMany({
         where: { userId },
@@ -140,7 +141,8 @@ export async function GET(request: Request) {
 // POST - Створення нового замовлення
 export async function POST(request: Request) {
   try {
-    const userId = verifyToken(request.headers.get("Authorization"));
+    const decoded = verifyToken(request.headers.get("Authorization"));
+    const userId = Number(decoded.id);
 
     const body: OrderInput = await request.json();
     const { items, addressId, paymentId, deliveryMethod, comment, total } = body;

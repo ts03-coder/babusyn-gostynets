@@ -10,6 +10,12 @@ interface JWTPayload {
   role: string;
 }
 
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 // GET: Отримання всіх слайдів
 export async function GET(request: NextRequest) {
   try {
@@ -27,7 +33,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ slides }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error('Error fetching slides:', apiError);
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
@@ -54,7 +62,7 @@ export async function POST(request: NextRequest) {
     const imageFile = formData.get("image") as File | null;
 
     if (!title || !subtitle || !link || !imageFile) {
-      return NextResponse.json({ error: "Усі поля обов’язкові" }, { status: 400 });
+      return NextResponse.json({ error: "Усі поля обов'язкові" }, { status: 400 });
     }
 
     // Валідація файлу
@@ -92,10 +100,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ slide }, { status: 201 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
+    console.error('Error creating slide:', apiError);
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
@@ -128,7 +138,7 @@ export async function PUT(request: NextRequest) {
     const imageFile = formData.get("image") as File | null;
 
     if (!title || !subtitle || !link) {
-      return NextResponse.json({ error: "Усі поля (крім зображення) обов’язкові" }, { status: 400 });
+      return NextResponse.json({ error: "Усі поля (крім зображення) обов'язкові" }, { status: 400 });
     }
 
     // Отримання існуючого слайду
@@ -185,13 +195,15 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json({ slide }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    if (error.code === "P2025") {
+    if (apiError.code === "P2025") {
       return NextResponse.json({ error: "Слайд не знайдено" }, { status: 404 });
     }
+    console.error('Error updating slide:', apiError);
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
@@ -235,13 +247,15 @@ export async function DELETE(request: NextRequest) {
     });
 
     return NextResponse.json({ message: "Слайд успішно видалено" }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
     }
-    if (error.code === "P2025") {
+    if (apiError.code === "P2025") {
       return NextResponse.json({ error: "Слайд не знайдено" }, { status: 404 });
     }
+    console.error('Error deleting slide:', apiError);
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
   }
 }

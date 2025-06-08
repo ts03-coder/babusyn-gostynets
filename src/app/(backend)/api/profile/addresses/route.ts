@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
 
+interface DecodedToken {
+  id: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+interface ApiError extends Error {
+  name: string;
+  message: string;
+  code?: string;
+}
+
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -10,8 +23,8 @@ export async function GET(request: Request) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    const userId = decoded.id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+    const userId = Number(decoded.id);
 
     const addresses = await prisma.address.findMany({
       where: { userId },
@@ -22,8 +35,12 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ addresses });
-  } catch (error) {
-    console.error('Error fetching addresses:', error);
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error('Error fetching addresses:', apiError);
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
+      return NextResponse.json({ error: "Недійсний токен" }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -39,9 +56,11 @@ export async function POST(request: Request) {
     let userId: number;
 
     try {
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-      userId = decoded.id;
-    } catch (err) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
+      userId = Number(decoded.id);
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error('Error verifying token:', apiError);
       return NextResponse.json({ error: 'Недійсний токен' }, { status: 401 });
     }
 
@@ -68,8 +87,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ address: newAddress }, { status: 201 });
-  } catch (error: any) {
-    console.error('Помилка при створенні адреси:', error);
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    console.error('Помилка при створенні адреси:', apiError);
     return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
