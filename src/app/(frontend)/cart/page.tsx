@@ -30,18 +30,33 @@ interface ApiError extends Error {
   };
 }
 
+interface ApiCartItem {
+  id: string
+  productId: string
+  product: {
+    id: string
+    name: string
+    image: string
+    price: number
+    stock: number
+    discount: number
+    isOnSale: boolean
+  }
+  quantity: number
+}
+
 // Допоміжна функція для форматування елемента кошика з відповіді API
-const formatApiCartItem = (apiItem: any): CartItem => {
+const formatApiCartItem = (apiItem: ApiCartItem): CartItem => {
   return {
     id: apiItem.id,
     productId: apiItem.productId,
     name: apiItem.product.name,
     image: apiItem.product.image || "/placeholder.svg",
-    price: apiItem.product.price, // Ціна без знижки
+    price: apiItem.product.price,
     quantity: apiItem.quantity,
     stock: apiItem.product.stock,
-    discount: apiItem.product.discount, // Відсоток знижки
-    isOnSale: apiItem.product.isOnSale, // Додаємо isOnSale
+    discount: apiItem.product.discount,
+    isOnSale: apiItem.product.isOnSale,
   };
 };
 
@@ -83,9 +98,10 @@ export default function CartPage() {
         console.error('Помилка завантаження кошика:', error)
         toast.error(error.error || "Не вдалося завантажити кошик. Спробуйте пізніше.")
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const apiError = error as ApiError
       console.error('Помилка завантаження кошика:', error)
-      toast.error("Сталася помилка під час з'єднання з сервером.")
+      toast.error(apiError.response?.data?.error || "Сталася помилка під час з'єднання з сервером.")
     } finally {
       setLoading(false)
     }
@@ -99,7 +115,7 @@ export default function CartPage() {
       setLoading(false)
       setCartItems([])
     }
-  }, [])
+  }, [fetchCart])
 
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
@@ -300,7 +316,6 @@ export default function CartPage() {
                   <div className="space-y-4">
                     {cartItems.map((item) => {
                       const pricePerUnit = item.price; // Оригінальна ціна за одиницю
-                      const totalPriceForLine = item.quantity * item.price;
                       // Ціна зі знижкою для цього товару
                       const discountedPricePerUnit = item.isOnSale && item.discount > 0 
                         ? pricePerUnit * (1 - item.discount / 100)

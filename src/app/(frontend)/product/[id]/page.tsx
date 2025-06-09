@@ -10,13 +10,9 @@ import {
   ChevronRight,
   Minus,
   Plus,
-  Heart,
-  Share2,
   ShoppingCart,
-  Star,
   Truck,
   ShieldCheck,
-  RotateCcw,
   Loader2,
 } from "lucide-react"
 import { useCart } from "@/lib/CartContext"
@@ -50,6 +46,11 @@ interface RecommendedProduct {
   description: string
   isOnSale: boolean
   discount: number
+}
+
+interface ApiError {
+  message: string
+  error?: string
 }
 
 export default function ProductPage() {
@@ -97,8 +98,8 @@ export default function ProductPage() {
         if (recommendedResponse.ok && Array.isArray(recommendedData.products)) {
           setRecommendedProducts(
             recommendedData.products
-              .filter((p: any) => p.id !== productId)
-              .map((p: any) => ({
+              .filter((p: RecommendedProduct) => p.id !== productId)
+              .map((p: RecommendedProduct) => ({
                 id: p.id,
                 name: p.name,
                 price: p.price,
@@ -112,8 +113,9 @@ export default function ProductPage() {
           console.warn("Не удалось загрузить рекомендованные товары:", recommendedData)
           setRecommendedProducts([])
         }
-      } catch (error: any) {
-        showErrorMessage(`Ошибка: ${error.message}`)
+      } catch (error: unknown) {
+        const apiError = error as ApiError
+        showErrorMessage(`Ошибка: ${apiError.message || apiError.error || "Неизвестная ошибка"}`)
       } finally {
         setLoading(false)
       }
@@ -149,14 +151,10 @@ export default function ProductPage() {
         },
         () => router.push("/login")
       )
-    } catch (error: any) {
-      showErrorMessage(`Ошибка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError
+      showErrorMessage(`Ошибка: ${apiError.message || apiError.error || "Неизвестная ошибка"}`)
     }
-  }
-
-  // Добавление товара в список желаний (пока только консоль)
-  const addToWishlist = () => {
-    console.log(`Добавлено в список желаний: ${product?.name}`)
   }
 
   // Переключение на следующее изображение

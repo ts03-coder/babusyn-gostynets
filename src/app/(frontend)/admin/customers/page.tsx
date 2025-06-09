@@ -49,6 +49,11 @@ interface User {
   }[];
 }
 
+interface ApiError {
+  message: string;
+  error?: string;
+}
+
 interface EditFormState {
   name: string;
   email: string;
@@ -135,8 +140,9 @@ export default function CustomersPage() {
         // Фильтруем пользователей с ролью USER
         const customers = data.users.filter((user: User) => user.role === "USER")
         setUsers(customers)
-      } catch (error: any) {
-        showMessage("error", `Помилка: ${error.message}`)
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
       } finally {
         setIsLoading(false)
       }
@@ -218,8 +224,9 @@ export default function CustomersPage() {
       )
       setIsEditDialogOpen(false)
       showMessage("success", "Успіх: Клієнта успішно оновлено")
-    } catch (error: any) {
-      showMessage("error", `Помилка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
     }
   }
 
@@ -248,8 +255,9 @@ export default function CustomersPage() {
       setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id))
       setIsDeleteDialogOpen(false)
       showMessage("success", "Успіх: Клієнта успішно видалено")
-    } catch (error: any) {
-      showMessage("error", `Помилка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
     }
   }
 
@@ -517,7 +525,7 @@ export default function CustomersPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">
-                  Ім'я
+                  Ім&apos;я
                 </label>
                 <Input
                   id="name"

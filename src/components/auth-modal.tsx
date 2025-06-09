@@ -241,7 +241,7 @@ const handleLoginSubmit = async (e: React.FormEvent) => {
                     }
                   />
                   <Label htmlFor="remember" className="text-sm text-gray-600">
-                    Запам'ятати мене
+                    Запам&apos;sятати мене
                   </Label>
                 </div>
                 <button className="text-sm text-primary hover:underline">Забули пароль?</button>

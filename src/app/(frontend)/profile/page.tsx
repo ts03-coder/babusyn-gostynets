@@ -23,6 +23,15 @@ interface UserData {
   avatar?: string;
 }
 
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+  message: string;
+}
+
 interface Order {
   id: number;
   createdAt: string;
@@ -126,9 +135,9 @@ export default function ProfilePage() {
       setAddresses(addressesResponse.data.addresses || []);
       setPaymentMethods(paymentMethodsResponse.data.paymentMethods || []);
       setNotificationSettings(notificationsResponse.data.notificationSettings || {});
-    } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Не вдалося завантажити дані. Спробуйте ще раз.");
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error.response?.data?.error || "Не вдалося завантажити дані. Спробуйте ще раз.");
     } finally {
       setLoading(false);
     }
@@ -179,8 +188,9 @@ export default function ProfilePage() {
 
         setUser(response.data.user);
         toast.success("Профіль успішно оновлено!");
-      } catch (err: any) {
-        toast.error(err.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        toast.error(error.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
       } finally {
         setLoading(false);
       }
@@ -207,8 +217,9 @@ export default function ProfilePage() {
 
         setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
         toast.success("Пароль успішно змінено!");
-      } catch (err: any) {
-        toast.error(err.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        toast.error(error.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
       } finally {
         setLoading(false);
       }
@@ -230,8 +241,9 @@ export default function ProfilePage() {
         );
 
         toast.success("Налаштування сповіщень успішно оновлено!");
-      } catch (err: any) {
-        toast.error(err.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        toast.error(error.response?.data?.error || "Щось пішло не так. Спробуйте ще раз.");
       } finally {
         setLoading(false);
       }
@@ -353,7 +365,7 @@ export default function ProfilePage() {
                     <form onSubmit={handleProfileSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <Label htmlFor="name">Ім'я та прізвище</Label>
+                          <Label htmlFor="name">Ім&apos;я та прізвище</Label>
                           <Input
                             id="name"
                             name="name"

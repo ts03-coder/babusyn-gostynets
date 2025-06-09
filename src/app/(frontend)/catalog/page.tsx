@@ -64,7 +64,6 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const productsPerPage = 9;
-  const [error, setError] = useState<string | null>(null);
 
   // Завантаження даних при зміні фільтрів або сторінки
   useEffect(() => {
@@ -109,7 +108,7 @@ export default function CatalogPage() {
       } catch (error: unknown) {
         const apiError = error as ApiError;
         console.error("Помилка при отриманні товарів:", apiError);
-        setError(apiError.response?.data?.error || "Помилка при завантаженні товарів");
+        toast.error(apiError.response?.data?.error || "Помилка при завантаженні товарів");
       } finally {
         setIsLoading(false);
       }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
@@ -31,11 +31,6 @@ interface OrderInput {
   deliveryMethod?: string;
   comment?: string;
   total: number;
-}
-
-interface UpdateOrderInput {
-  status?: string;
-  comment?: string;
 }
 
 // Мідлвар для перевірки авторизації

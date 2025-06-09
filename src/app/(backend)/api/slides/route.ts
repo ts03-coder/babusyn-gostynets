@@ -17,7 +17,7 @@ interface ApiError extends Error {
 }
 
 // GET: Отримання всіх слайдів
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const slides = await prisma.slide.findMany({
       orderBy: {

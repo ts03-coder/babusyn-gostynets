@@ -16,6 +16,11 @@ interface Slide {
   link: string;
 }
 
+interface ApiError {
+  message: string;
+  error?: string;
+}
+
 export default function SlidesAdminPage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,15 +53,16 @@ export default function SlidesAdminPage() {
           throw new Error(data.error || "Не вдалося завантажити слайди");
         }
         setSlides(data.slides);
-      } catch (error: any) {
-        setErrorMessage(`Помилка: ${error.message}`);
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        setErrorMessage(`Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchSlides();
-  }, []);
+  }, [token]);
 
   // Обробник зміни полів форми
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,8 +127,9 @@ export default function SlidesAdminPage() {
       setImagePreview(null);
       setEditingSlide(null);
       setIsFormOpen(false);
-    } catch (error: any) {
-      setErrorMessage(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      setErrorMessage(`Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`);
     }
   };
 
@@ -157,8 +164,9 @@ export default function SlidesAdminPage() {
       }
 
       setSlides(slides.filter((slide) => slide.id !== id));
-    } catch (error: any) {
-      setErrorMessage(`Помилка: ${error.message}`);
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      setErrorMessage(`Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`);
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,24 +32,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Bell,
-  Download,
   Eye,
-  Filter,
-  Home,
-  LogOut,
-  Menu,
   MoreHorizontal,
-  Package,
   Pencil,
-  Percent,
   Search,
-  Settings,
-  ShoppingBag,
-  Tag,
   Trash2,
-  Users,
-  X,
 } from "lucide-react";
 import { getCookie } from "cookies-next"
 
@@ -146,7 +133,7 @@ export default function OrdersPage() {
   const token = getCookie("token")
 
   // Функція для отримання всіх замовлень
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/orders", {
@@ -165,14 +152,14 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   // Виклик при завантаженні сторінки
   useEffect(() => {
     if (token) {
       fetchOrders();
     }
-  }, [token]);
+  }, [token, fetchOrders]);
 
   // Фільтрація замовлень за пошуковим запитом та статусом
   const filteredOrders = orders.filter(
@@ -542,7 +529,7 @@ export default function OrdersPage() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="comment" className="text-sm font-medium">
-                  Коментар (необов’язково)
+                  Коментар (необов`&apos;язково)
                 </label>
                 <textarea
                   id="comment"

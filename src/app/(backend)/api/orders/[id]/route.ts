@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/prisma";
 
-// Інтерфейс для помилок
 interface ApiError extends Error {
   name: string;
   message: string;
@@ -36,11 +35,15 @@ interface UpdateOrderInput {
   comment?: string;
 }
 
-// GET /:id - Отримання окремого замовлення
-export async function GET_ID(request: Request, { params }: { params: { id: string } }) {
+// GET /api/orders/[id]
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const userId = Number(verifyToken(request.headers.get("Authorization")));
-    const orderId = Number(params.id);
+    const orderId = Number(id);
 
     if (isNaN(orderId) || isNaN(userId)) {
       return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
@@ -49,32 +52,12 @@ export async function GET_ID(request: Request, { params }: { params: { id: strin
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId: userId,
+        userId,
       },
       include: {
-        items: {
-          select: {
-            productId: true,
-            name: true,
-            quantity: true,
-            price: true,
-          },
-        },
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        address: {
-          select: {
-            address: true,
-            city: true,
-            postal: true,
-            fullName: true,
-            phone: true,
-          },
-        },
+        items: { select: { productId: true, name: true, quantity: true, price: true } },
+        user: { select: { name: true, email: true } },
+        address: { select: { address: true, city: true, postal: true, fullName: true, phone: true } },
       },
     });
 
@@ -95,11 +78,15 @@ export async function GET_ID(request: Request, { params }: { params: { id: strin
   }
 }
 
-// PUT /:id - Оновлення замовлення (статусу та коментаря)
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+// PUT /api/orders/[id]
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const userId = Number(verifyToken(request.headers.get("Authorization")));
-    const orderId = Number(params.id);
+    const orderId = Number(id);
 
     if (isNaN(orderId) || isNaN(userId)) {
       return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
@@ -108,25 +95,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const body: UpdateOrderInput = await request.json();
     const { status, comment } = body;
 
-    // Перевірка валідності статусу
-    const validStatuses = [
-      "PENDING",
-      "PROCESSING",
-      "PAID",
-      "SHIPPED",
-      "DELIVERED",
-      "CANCELLED",
-    ];
+    const validStatuses = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"];
     if (status && !validStatuses.includes(status)) {
       return NextResponse.json({ error: "Недійсний статус замовлення" }, { status: 400 });
     }
 
-    // Перевірка існування замовлення
     const existingOrder = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId: userId,
-      },
+      where: { id: orderId, userId },
     });
 
     if (!existingOrder) {
@@ -140,21 +115,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         comment: comment !== undefined ? comment : existingOrder.comment,
       },
       include: {
-        items: {
-          select: {
-            productId: true,
-            name: true,
-            quantity: true,
-            price: true,
-          },
-        },
+        items: { select: { productId: true, name: true, quantity: true, price: true } },
         address: true,
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
+        user: { select: { name: true, email: true } },
       },
     });
 
@@ -171,21 +134,22 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-// DELETE /:id - Видалення замовлення
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+// DELETE /api/orders/[id]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const userId = Number(verifyToken(request.headers.get("Authorization")));
-    const orderId = Number(params.id);
+    const orderId = Number(id);
 
     if (isNaN(orderId) || isNaN(userId)) {
       return NextResponse.json({ error: "Недійсний ID" }, { status: 400 });
     }
 
     const existingOrder = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId: userId,
-      },
+      where: { id: orderId, userId },
     });
 
     if (!existingOrder) {
@@ -193,15 +157,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     await prisma.$transaction(async (tx) => {
-      // Видалення елементів замовлення
-      await tx.orderItem.deleteMany({
-        where: { orderId },
-      });
-
-      // Видалення самого замовлення
-      await tx.order.delete({
-        where: { id: orderId },
-      });
+      await tx.orderItem.deleteMany({ where: { orderId } });
+      await tx.order.delete({ where: { id: orderId } });
     });
 
     return NextResponse.json({ message: "Замовлення успішно видалено" });

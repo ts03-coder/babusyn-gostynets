@@ -11,6 +11,11 @@ interface JWTPayload {
   email?: string;
 }
 
+interface ApiError extends Error {
+  name: string;
+  message: string;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Проверка авторизации (только для администраторов)
@@ -207,10 +212,11 @@ export async function GET(request: NextRequest) {
       categoryData: formattedCategoryData,
     })
   } catch (error: unknown) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    const apiError = error as ApiError;
+    if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
       return NextResponse.json({ error: "Недійсний токен" }, { status: 401 })
     }
-    console.error("Error fetching dashboard data:", error)
+    console.error("Error fetching dashboard data:", apiError)
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 })
   }
 }

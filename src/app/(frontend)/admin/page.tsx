@@ -7,23 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import {
-  BarChart3,
-  Bell,
-  Calendar,
   CreditCard,
   DollarSign,
-  Home,
-  LogOut,
-  Package,
-  Percent,
-  Settings,
   ShoppingBag,
-  Tag,
   Users,
-  Menu,
-  X,
-  ChevronDown,
-  Search,
 } from "lucide-react"
 import {
   AreaChart,
@@ -79,6 +66,11 @@ interface CategoryData {
   value: number;
 }
 
+interface ApiError {
+  message: string;
+  error?: string;
+}
+
 interface DashboardData {
   stats: Stat[];
   recentOrders: Order[];
@@ -121,8 +113,9 @@ export default function AdminDashboard() {
           throw new Error(data.error || "Не вдалося завантажити дані")
         }
         setDashboardData(data)
-      } catch (err: any) {
-        setError(`Помилка: ${err.message}`)
+      } catch (err: unknown) {
+        const apiError = err as ApiError;
+        setError(`Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
       } finally {
         setIsLoading(false)
       }

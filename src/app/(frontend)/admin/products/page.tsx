@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -78,9 +77,9 @@ interface FormState {
   saleEndDate: string;
 }
 
-interface ProductsResponse {
-  products: Product[];
-  total: number;
+interface ApiError {
+  message: string;
+  error?: string;
 }
 
 export default function ProductsPage() {
@@ -130,7 +129,7 @@ export default function ProductsPage() {
     saleStartDate: "",
     saleEndDate: "",
   })
-  const pathname = usePathname()
+
   const [currentPage, setCurrentPage] = useState(1)
   const productsPerPage = 10
   const [totalProducts, setTotalProducts] = useState(0)
@@ -170,8 +169,9 @@ export default function ProductsPage() {
           throw new Error(data.error || "Не вдалося завантажити категорії")
         }
         setCategories([{ id: "all", name: "Всі категорії", slug: "all", description: null, image: null, productsCount: 0 }, ...data.categories])
-      } catch (error: any) {
-        showMessage("error", `Помилка: ${error.message}`)
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
       } finally {
         setIsLoadingCategories(false)
       }
@@ -209,8 +209,9 @@ export default function ProductsPage() {
         }
         setProductsData(data.products)
         setTotalProducts(data.total)
-      } catch (error: any) {
-        showMessage("error", `Помилка: ${error.message}`)
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
       } finally {
         setIsLoadingProducts(false)
       }
@@ -323,8 +324,9 @@ export default function ProductsPage() {
       setIsAddDialogOpen(false)
       showMessage("success", "Успіх: Продукт успішно додано")
       setCurrentPage(1) // Повернення на першу сторінку після додавання
-    } catch (error: any) {
-      showMessage("error", `Помилка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
     }
   }
 
@@ -383,8 +385,9 @@ export default function ProductsPage() {
       )
       setIsEditDialogOpen(false)
       showMessage("success", "Успіх: Продукт успішно оновлено")
-    } catch (error: any) {
-      showMessage("error", `Помилка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
     }
   }
 
@@ -413,8 +416,9 @@ export default function ProductsPage() {
       setIsDeleteDialogOpen(false)
       showMessage("success", data.message || "Успіх: Продукт успішно видалено")
       setCurrentPage(1) // Повернення на першу сторінку після видалення
-    } catch (error: any) {
-      showMessage("error", `Помилка: ${error.message}`)
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
     }
   }
 
