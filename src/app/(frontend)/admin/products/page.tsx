@@ -82,6 +82,12 @@ interface ApiError {
   error?: string;
 }
 
+interface ApiResponse {
+  product?: Product;
+  error?: string;
+  message?: string;
+}
+
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -327,7 +333,7 @@ export default function ProductsPage() {
         }
       };
 
-      const response = await new Promise((resolve, reject) => {
+      const response = await new Promise<ApiResponse>((resolve, reject) => {
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(JSON.parse(xhr.responseText));
@@ -339,14 +345,13 @@ export default function ProductsPage() {
         xhr.send(formData);
       });
 
-      const data = response as any;
-      if (!data.product) {
-        throw new Error(data.error || "Не вдалося додати продукт")
+      if (!response.product) {
+        throw new Error(response.error || "Не вдалося додати продукт")
       }
 
-      if (imageFile && data.product.image) {
+      if (imageFile && response.product.image) {
         try {
-          const imageResponse = await fetch(data.product.image);
+          const imageResponse = await fetch(response.product.image);
           if (!imageResponse.ok) {
             throw new Error("Файл не був успішно завантажений");
           }
@@ -356,7 +361,15 @@ export default function ProductsPage() {
         }
       }
 
-      setProductsData((prev) => [...prev, { ...data.product, category: { id: categoryId, name: categories.find(cat => cat.id === categoryId)?.name || categoryId } }])
+      const newProduct: Product = {
+        ...response.product,
+        category: { 
+          id: categoryId, 
+          name: categories.find(cat => cat.id === categoryId)?.name || categoryId 
+        }
+      };
+
+      setProductsData((prev) => [...prev, newProduct]);
       setIsAddDialogOpen(false)
       showMessage("success", "Успіх: Продукт успішно додано")
       setCurrentPage(1)

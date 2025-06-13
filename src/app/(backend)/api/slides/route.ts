@@ -86,8 +86,29 @@ export async function POST(request: NextRequest) {
     const filePath = path.join(uploadDir, fileName);
 
     try {
-      await fs.mkdir(uploadDir, { recursive: true });
+      // Проверяем существование директории
+      try {
+        await fs.access(uploadDir);
+      } catch {
+        await fs.mkdir(uploadDir, { recursive: true });
+      }
+
+      // Проверяем права на запись
+      try {
+        await fs.access(uploadDir, fs.constants.W_OK);
+      } catch {
+        return NextResponse.json({ error: "Немає прав на запис у директорію" }, { status: 500 });
+      }
+
       await fs.writeFile(filePath, buffer);
+      
+      // Проверяем что файл действительно создался
+      try {
+        await fs.access(filePath, fs.constants.F_OK);
+      } catch {
+        return NextResponse.json({ error: "Помилка при створенні файлу" }, { status: 500 });
+      }
+
       const imagePath = `/uploads/${fileName}`;
 
       // Створюємо слайд у базі даних
@@ -185,8 +206,29 @@ export async function PUT(request: NextRequest) {
       const filePath = path.join(uploadDir, fileName);
 
       try {
-        await fs.mkdir(uploadDir, { recursive: true });
+        // Проверяем существование директории
+        try {
+          await fs.access(uploadDir);
+        } catch {
+          await fs.mkdir(uploadDir, { recursive: true });
+        }
+
+        // Проверяем права на запись
+        try {
+          await fs.access(uploadDir, fs.constants.W_OK);
+        } catch {
+          return NextResponse.json({ error: "Немає прав на запис у директорію" }, { status: 500 });
+        }
+
         await fs.writeFile(filePath, buffer);
+        
+        // Проверяем что файл действительно создался
+        try {
+          await fs.access(filePath, fs.constants.F_OK);
+        } catch {
+          return NextResponse.json({ error: "Помилка при створенні файлу" }, { status: 500 });
+        }
+
         imagePath = `/uploads/${fileName}`;
       } catch (error) {
         console.error('Error saving file:', error);

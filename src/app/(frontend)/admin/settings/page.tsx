@@ -109,7 +109,14 @@ export default function SlidesAdminPage() {
         body: formDataToSend,
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        throw new Error("Сервер повернув некоректний формат відповіді");
+      }
+
       if (!response.ok) {
         throw new Error(data.error || "Не вдалося зберегти слайд");
       }
@@ -237,11 +244,14 @@ export default function SlidesAdminPage() {
                 required={!editingSlide || imageFile !== null}
               />
               {imagePreview && (
-                <div className="mt-2">
+                <div className="mt-2 relative w-32 h-32">
                   <Image
                     src={imagePreview}
                     alt="Попередній перегляд"
-                    className="w-32 h-32 object-cover rounded"
+                    fill
+                    sizes="128px"
+                    className="object-cover rounded"
+                    unoptimized
                   />
                 </div>
               )}
@@ -281,11 +291,16 @@ export default function SlidesAdminPage() {
                 className="flex items-center justify-between p-4 hover:bg-gray-50"
               >
                 <div className="flex items-center gap-4">
-                  <Image
-                    src={slide.image}
-                    alt={slide.title}
-                    className="w-16 h-16 object-cover rounded"
-                  />
+                  <div className="relative w-16 h-16">
+                    <Image
+                      src={slide.image}
+                      alt={slide.title}
+                      fill
+                      sizes="64px"
+                      className="object-cover rounded"
+                      unoptimized
+                    />
+                  </div>
                   <div>
                     <h3 className="font-medium">{slide.title}</h3>
                     <p className="text-sm text-gray-500">{slide.subtitle}</p>
