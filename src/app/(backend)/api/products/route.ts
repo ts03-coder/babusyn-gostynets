@@ -195,7 +195,15 @@ export async function POST(request: NextRequest) {
       try {
         await fs.mkdir(uploadDir, { recursive: true });
         await fs.writeFile(filePath, buffer);
-        imagePath = `/uploads/${fileName}`;
+        
+        // Проверка что файл действительно создался
+        try {
+          await fs.access(filePath);
+          imagePath = `/uploads/${fileName}`;
+        } catch (error) {
+          console.error('Error verifying file:', error);
+          return NextResponse.json({ error: "Помилка при перевірці завантаженого файлу" }, { status: 500 });
+        }
       } catch (error) {
         console.error('Error saving file:', error);
         return NextResponse.json({ error: "Помилка при збереженні файлу" }, { status: 500 });

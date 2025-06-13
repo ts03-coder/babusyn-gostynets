@@ -133,6 +133,8 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const productsPerPage = 10
   const [totalProducts, setTotalProducts] = useState(0)
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const showMessage = (type: "success" | "error", message: string) => {
     if (type === "success") {
@@ -282,6 +284,10 @@ export default function ProductsPage() {
 
       const { name, categoryId, price, stock, sku, status, description, ingredients, imageFile, isOnSale, discount, saleStartDate, saleEndDate } = addFormState
 
+      if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+        throw new Error("Розмір файлу перевищує 5MB")
+      }
+
       const priceNum = parseFloat(price)
       const stockNum = parseInt(stock)
       const discountNum = parseInt(discount) || 0
@@ -290,6 +296,9 @@ export default function ProductsPage() {
       if (!name || !categoryId || !price || !sku || !status) {
         throw new Error("Обов'язкові поля (назва, категорія, ціна, SKU, статус) є обов'язковими")
       }
+
+      setIsUploading(true);
+      setUploadProgress(0);
 
       const formData = new FormData()
       formData.append("name", name)
@@ -307,26 +316,56 @@ export default function ProductsPage() {
       if (saleEndDate) formData.append("saleEndDate", saleEndDate)
       if (imageFile) formData.append("image", imageFile)
 
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      })
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/products", true);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
-      const data = await response.json()
-      if (!response.ok) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded * 100) / event.total);
+          setUploadProgress(progress);
+        }
+      };
+
+      const response = await new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(xhr.responseText));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Помилка мережі"));
+        xhr.send(formData);
+      });
+
+      const data = response as any;
+      if (!data.product) {
         throw new Error(data.error || "Не вдалося додати продукт")
+      }
+
+      if (imageFile && data.product.image) {
+        try {
+          const imageResponse = await fetch(data.product.image);
+          if (!imageResponse.ok) {
+            throw new Error("Файл не був успішно завантажений");
+          }
+        } catch (error) {
+          console.error('Error verifying uploaded file:', error);
+          throw new Error("Помилка при перевірці завантаженого файлу");
+        }
       }
 
       setProductsData((prev) => [...prev, { ...data.product, category: { id: categoryId, name: categories.find(cat => cat.id === categoryId)?.name || categoryId } }])
       setIsAddDialogOpen(false)
       showMessage("success", "Успіх: Продукт успішно додано")
-      setCurrentPage(1) // Повернення на першу сторінку після додавання
+      setCurrentPage(1)
     } catch (error: unknown) {
       const apiError = error as ApiError;
       showMessage("error", `Помилка: ${apiError.message || apiError.error || "Невідома помилка"}`)
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   }
 
@@ -1221,13 +1260,28 @@ export default function ProductsPage() {
                 accept="image/*"
                 onChange={(e) => setAddFormState({ ...addFormState, imageFile: e.target.files?.[0] || null })}
               />
+              {isUploading && (
+                <div className="mt-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Завантаження: {uploadProgress}%
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={isUploading}>
               Скасувати
             </Button>
-            <Button onClick={addProduct}>Зберегти</Button>
+            <Button onClick={addProduct} disabled={isUploading}>
+              {isUploading ? "Завантаження..." : "Зберегти"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
