@@ -82,24 +82,29 @@ export async function POST(request: NextRequest) {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const fileExt = path.extname(imageFile.name);
     const fileName = `${uniqueSuffix}${fileExt}`;
-    const filePath = path.join("public/uploads", fileName);
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    const filePath = path.join(uploadDir, fileName);
 
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, buffer);
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.writeFile(filePath, buffer);
+      const imagePath = `/uploads/${fileName}`;
 
-    const imagePath = `/uploads/${fileName}`;
+      // Створюємо слайд у базі даних
+      const slide = await prisma.slide.create({
+        data: {
+          title,
+          subtitle,
+          image: imagePath,
+          link,
+        },
+      });
 
-    // Створюємо слайд у базі даних
-    const slide = await prisma.slide.create({
-      data: {
-        title,
-        subtitle,
-        image: imagePath,
-        link,
-      },
-    });
-
-    return NextResponse.json({ slide }, { status: 201 });
+      return NextResponse.json({ slide }, { status: 201 });
+    } catch (error) {
+      console.error('Error saving file:', error);
+      return NextResponse.json({ error: "Помилка при збереженні файлу" }, { status: 500 });
+    }
   } catch (error: unknown) {
     const apiError = error as ApiError;
     if (apiError.name === "JsonWebTokenError" || apiError.name === "TokenExpiredError") {
@@ -176,12 +181,17 @@ export async function PUT(request: NextRequest) {
       const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
       const fileExt = path.extname(imageFile.name);
       const fileName = `${uniqueSuffix}${fileExt}`;
-      const filePath = path.join("public/uploads", fileName);
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      const filePath = path.join(uploadDir, fileName);
 
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, buffer);
-
-      imagePath = `/uploads/${fileName}`;
+      try {
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(filePath, buffer);
+        imagePath = `/uploads/${fileName}`;
+      } catch (error) {
+        console.error('Error saving file:', error);
+        return NextResponse.json({ error: "Помилка при збереженні файлу" }, { status: 500 });
+      }
     }
 
     const slide = await prisma.slide.update({

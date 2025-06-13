@@ -41,7 +41,7 @@ const About: NextPage = () => {
                     </div>
                     <div className="flex justify-center">
                     <Image
-                        src="/placeholder.svg?height=640&width=640"
+                        src="/images/our_history.jpg"
                         alt="Наша історія"
                         width={640}
                         height={640}
@@ -58,7 +58,7 @@ const About: NextPage = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1 flex justify-center">
               <Image
-                src="/placeholder.svg?height=640&width=640"
+                src="/images/our_values.jpg"
                 alt="Наші цінності"
                 width={640}
                 height={640}
@@ -98,7 +98,7 @@ const About: NextPage = () => {
                   </div>
                   <div className="flex justify-center">
                   <Image
-                      src="/placeholder.svg?height=640&width=640"
+                      src="/images/why_choose_us.png"
                       alt="Чому обирають нас"
                       width={640}
                       height={640}

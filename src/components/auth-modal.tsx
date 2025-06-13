@@ -347,10 +347,6 @@ const handleLoginSubmit = async (e: React.FormEvent) => {
             </form>
           </TabsContent>
         </Tabs>
-
-        <p className="text-sm text-muted-foreground">
-          Ми&apos;луюсь, але наразі ми не можемо обробити ваш запит. Будь ласка, спробуйте пізніше.
-        </p>
       </DialogContent>
     </Dialog>
   );

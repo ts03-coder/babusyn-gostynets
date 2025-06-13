@@ -189,12 +189,17 @@ export async function POST(request: NextRequest) {
     if (imageFile) {
       const buffer = Buffer.from(await imageFile.arrayBuffer());
       const fileName = `${Date.now()}-${imageFile.name}`;
-      const filePath = path.join("public/uploads", fileName);
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+      const filePath = path.join(uploadDir, fileName);
 
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.writeFile(filePath, buffer);
-
-      imagePath = `/uploads/${fileName}`;
+      try {
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(filePath, buffer);
+        imagePath = `/uploads/${fileName}`;
+      } catch (error) {
+        console.error('Error saving file:', error);
+        return NextResponse.json({ error: "Помилка при збереженні файлу" }, { status: 500 });
+      }
     }
 
     // Знаходимо категорію за ID
